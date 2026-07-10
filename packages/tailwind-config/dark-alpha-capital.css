@@ -1,0 +1,185 @@
+/**
+ * Dark Alpha Capital Theme
+ * Premium dark-first design with gold accents
+ */
+
+@layer base {
+  /* Force dark mode as default */
+  :root {
+    color-scheme: dark;
+
+    /* Dark Alpha Capital Brand Colors */
+    --dac-gold: oklch(0.72 0.18 68);
+    --dac-gold-light: oklch(0.82 0.16 70);
+    --dac-gold-dark: oklch(0.62 0.20 65);
+    --dac-black: oklch(0.12 0 0);
+    --dac-charcoal: oklch(0.18 0 0);
+    --dac-slate: oklch(0.25 0 0);
+  }
+
+  /* Override to ensure dark mode */
+  html,
+  body {
+    background-color: oklch(0.1689 0.0021 230.81);
+    color: var(--text-color-primary, #ffffff);
+  }
+}
+
+@layer components {
+  /* Premium card styling */
+  .dac-card {
+    background: linear-gradient(
+      145deg,
+      oklch(0.20 0.002 230.81),
+      oklch(0.17 0.002 230.81)
+    );
+    border: 1px solid oklch(0.3415 0.0049 230.86);
+    border-radius: 0.5rem;
+    box-shadow: 0px 10px 10px -5px #292f3d0a, 0px 10px 40px -5px #292f3d0a;
+  }
+
+  /* Gold accent buttons */
+  .dac-button-primary {
+    background: linear-gradient(135deg, var(--dac-gold), var(--dac-gold-dark));
+    color: oklch(0.9235 0.001733 230.6853);
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0 4px 12px oklch(0.72 0.18 68 / 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .dac-button-primary:hover {
+    box-shadow: 0 6px 16px oklch(0.72 0.18 68 / 0.4);
+    transform: translateY(-1px);
+  }
+
+  /* Premium sidebar */
+  .dac-sidebar {
+    background: linear-gradient(
+      180deg,
+      oklch(0.19 0.002 230.81),
+      oklch(0.16 0.002 230.81)
+    );
+    border-right: 1px solid oklch(0.3415 0.0049 230.86);
+  }
+
+  /* Gold accent borders */
+  .dac-border-gold {
+    border-color: var(--dac-gold);
+  }
+
+  /* Premium input fields */
+  .dac-input {
+    background: oklch(0.22 0.0025 230.82);
+    border: 1px solid oklch(0.2593 0.0033 230.84);
+    border-radius: 0.375rem;
+    padding: 0.5rem 0.75rem;
+    color: oklch(0.9235 0.001733 230.6853);
+    transition: all 0.2s ease;
+  }
+
+  .dac-input:focus {
+    border-color: var(--dac-gold);
+    outline: none;
+    box-shadow: 0 0 0 3px oklch(0.72 0.18 68 / 0.1);
+  }
+
+  /* Premium headings */
+  .dac-heading {
+    background: linear-gradient(135deg, oklch(0.95 0 0), var(--dac-gold-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+  }
+
+  /* Glass morphism effect for modals */
+  .dac-glass {
+    background: oklch(0.18 0.002 230.81 / 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid oklch(0.3 0.003 230.84 / 0.3);
+  }
+
+  /* Elevated surfaces */
+  .dac-elevated {
+    background: linear-gradient(
+      145deg,
+      oklch(0.21 0.0025 230.82),
+      oklch(0.18 0.002 230.81)
+    );
+    box-shadow: 0px 10px 10px -10px #292f3d0a, 0px 30px 60px -12px #292f3d1a;
+  }
+
+  /* Gold gradient text */
+  .dac-text-gold {
+    background: linear-gradient(135deg, var(--dac-gold-light), var(--dac-gold-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Premium scrollbar styling */
+  .dac-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--dac-gold-dark), var(--dac-gold));
+    border-radius: 10px;
+  }
+
+  .dac-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--dac-gold-light);
+  }
+
+  /* Logo container */
+  .dac-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .dac-logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--dac-gold-light), var(--dac-gold-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+@layer utilities {
+  /* Dark Alpha Capital specific utilities */
+  .dac-shadow-gold {
+    box-shadow: 0 4px 20px oklch(0.72 0.18 68 / 0.15);
+  }
+
+  .dac-glow-gold {
+    box-shadow:
+      0 0 20px oklch(0.72 0.18 68 / 0.3),
+      0 0 40px oklch(0.72 0.18 68 / 0.15);
+  }
+}
+
+/* Premium animations */
+@keyframes dac-shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.dac-shimmer {
+  animation: dac-shimmer 3s infinite linear;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(0.72 0.18 68 / 0.1),
+    transparent
+  );
+  background-size: 1000px 100%;
+}
