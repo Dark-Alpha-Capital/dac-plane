@@ -36,7 +36,7 @@ export const getPasswordStrength = (password: string): E_PASSWORD_STRENGTH => {
   const hasUpperCase = /[A-Z]/.test(password);
   const hasLowerCase = /[a-z]/.test(password);
   const hasDigit = /[0-9]/.test(password);
-  const hasSpecialChar = /[!@#$%^&*()\-_+=\[\]{}|;:'",.<>?/]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()\-_+=[\]{}|;:'",.<>?/]/.test(password);
 
   if (hasUpperCase && hasLowerCase && hasDigit && hasSpecialChar) {
     return E_PASSWORD_STRENGTH.STRENGTH_VALID;
@@ -78,7 +78,7 @@ export const getPasswordCriteria = (password: string): PasswordCriteria[] => [
   {
     key: "special",
     label: "Min 1 special character",
-    isValid: /[!@#$%^&*()\-_+=\[\]{}|;:'",.<>?/]/.test(password),
+    isValid: /[!@#$%^&*()\-_+=[\]{}|;:'",.<>?/]/.test(password),
   },
 ];
 
@@ -106,6 +106,13 @@ const errorCodeMessages: {
   [EAuthErrorCodes.SMTP_NOT_CONFIGURED]: {
     title: `SMTP not configured`,
     message: () => `SMTP not configured. Please contact your administrator.`,
+  },
+  [EAuthErrorCodes.EMAIL_DOMAIN_NOT_ALLOWED]: {
+    title: `Email domain not allowed`,
+    message: (email) =>
+      email
+        ? `Access restricted. Email domain not allowed. Only authorized domains can sign up or sign in.`
+        : `Access restricted. Only authorized email domains can sign up or sign in.`,
   },
   // email check in both sign up and sign in
   [EAuthErrorCodes.INVALID_EMAIL]: {
@@ -315,6 +322,7 @@ export const authErrorHandler = (errorCode: EAuthErrorCodes, email?: string): TA
     EAuthErrorCodes.SIGNUP_DISABLED,
     EAuthErrorCodes.INVALID_PASSWORD,
     EAuthErrorCodes.SMTP_NOT_CONFIGURED,
+    EAuthErrorCodes.EMAIL_DOMAIN_NOT_ALLOWED,
     EAuthErrorCodes.USER_ALREADY_EXIST,
     EAuthErrorCodes.AUTHENTICATION_FAILED_SIGN_UP,
     EAuthErrorCodes.REQUIRED_EMAIL_PASSWORD_SIGN_UP,

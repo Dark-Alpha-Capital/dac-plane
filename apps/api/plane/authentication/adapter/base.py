@@ -306,12 +306,30 @@ class Adapter:
         user.save()
         return user
 
+    def __check_email_domain(self, email):
+        (ALLOWED_EMAIL_DOMAIN,) = get_configuration_value([
+            {"key": "ALLOWED_EMAIL_DOMAIN", "default": os.environ.get("ALLOWED_EMAIL_DOMAIN", "")}
+        ])
+        if ALLOWED_EMAIL_DOMAIN:
+            domain = email.split("@")[-1] if "@" in email else ""
+            if domain != ALLOWED_EMAIL_DOMAIN:
+                self.logger.warning(f"Email domain not allowed: {domain}")
+                raise AuthenticationException(
+                    error_code=AUTHENTICATION_ERROR_CODES["EMAIL_DOMAIN_NOT_ALLOWED"],
+                    error_message="EMAIL_DOMAIN_NOT_ALLOWED",
+                    payload={"email": email},
+                )
+        return True
+
     def complete_login_or_signup(self):
         # Get email
         email = self.user_data.get("email")
 
         # Sanitize email
         email = self.sanitize_email(email)
+
+        # Check email domain restriction
+        self.__check_email_domain(email)
 
         # Check if the user is present
         user = User.objects.filter(email=email).first()

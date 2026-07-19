@@ -7,7 +7,15 @@
 import { useMemo, useCallback } from "react";
 // plane imports
 import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
-import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
+import {
+  CycleIcon,
+  DashboardIcon,
+  IntakeIcon,
+  ModuleIcon,
+  PageIcon,
+  ViewsIcon,
+  WorkItemsIcon,
+} from "@plane/propel/icons";
 import type { EUserProjectRoles, IPartialProject } from "@plane/types";
 import type { TNavigationItem } from "@/components/navigation/tab-navigation-root";
 
@@ -31,7 +39,17 @@ export const useNavigationItems = ({
 }: UseNavigationItemsProps): TNavigationItem[] => {
   // Base navigation items
   const baseNavigation = useCallback(
-    (workspaceSlug: string, projectId: string): TNavigationItem[] => [
+    (): TNavigationItem[] => [
+      {
+        i18n_key: "sidebar.overview",
+        key: "overview",
+        name: "Overview",
+        href: `/${workspaceSlug}/projects/${projectId}/overview`,
+        icon: DashboardIcon,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+        shouldRender: true,
+        sortOrder: 0,
+      },
       {
         i18n_key: "sidebar.work_items",
         key: "work_items",
@@ -93,12 +111,12 @@ export const useNavigationItems = ({
         sortOrder: 6,
       },
     ],
-    [project]
+    [project, workspaceSlug, projectId]
   );
 
   // Combine, filter, and sort navigation items
   const navigationItems = useMemo(() => {
-    const navItems = baseNavigation(workspaceSlug, projectId);
+    const navItems = baseNavigation();
 
     // Filter by permissions and shouldRender
     const filteredItems = navItems.filter((item) => {
@@ -108,8 +126,8 @@ export const useNavigationItems = ({
     });
 
     // Sort by sortOrder
-    return filteredItems.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-  }, [workspaceSlug, projectId, baseNavigation, allowPermissions, project?.id]);
+    return filteredItems.toSorted((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+  }, [workspaceSlug, baseNavigation, allowPermissions, project?.id]);
 
   return navigationItems;
 };

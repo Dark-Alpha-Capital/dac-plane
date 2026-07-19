@@ -10,7 +10,15 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { EUserPermissionsLevel, EUserPermissions } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
+import {
+  CycleIcon,
+  DashboardIcon,
+  IntakeIcon,
+  ModuleIcon,
+  PageIcon,
+  ViewsIcon,
+  WorkItemsIcon,
+} from "@plane/propel/icons";
 import type { EUserProjectRoles } from "@plane/types";
 // plane ui
 // components
@@ -69,7 +77,17 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
   };
 
   const baseNavigation = useCallback(
-    (workspaceSlug: string, projectId: string): TNavigationItem[] => [
+    (): TNavigationItem[] => [
+      {
+        i18n_key: "sidebar.overview",
+        key: "overview",
+        name: "Overview",
+        href: `/${workspaceSlug}/projects/${projectId}/overview`,
+        icon: DashboardIcon,
+        access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+        shouldRender: true,
+        sortOrder: 0,
+      },
       {
         i18n_key: "sidebar.work_items",
         key: "work_items",
@@ -131,27 +149,19 @@ export const ProjectNavigation = observer(function ProjectNavigation(props: TPro
         sortOrder: 6,
       },
     ],
-    [project]
+    [project, workspaceSlug, projectId]
   );
 
   // memoized navigation items and adding additional navigation items
   const navigationItemsMemo = useMemo(() => {
-    const navigationItems = (workspaceSlug: string, projectId: string): TNavigationItem[] => {
-      const navItems = baseNavigation(workspaceSlug, projectId);
+    const navItems = baseNavigation();
 
-      if (additionalNavigationItems) {
-        navItems.push(...additionalNavigationItems(workspaceSlug, projectId));
-      }
-
-      return navItems;
-    };
+    if (additionalNavigationItems) {
+      navItems.push(...additionalNavigationItems(workspaceSlug, projectId));
+    }
 
     // sort navigation items by sortOrder
-    const sortedNavigationItems = navigationItems(workspaceSlug, projectId).sort(
-      (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
-    );
-
-    return sortedNavigationItems;
+    return navItems.toSorted((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
   }, [workspaceSlug, projectId, baseNavigation, additionalNavigationItems]);
 
   const isActive = useCallback(

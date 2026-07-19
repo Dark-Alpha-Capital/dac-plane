@@ -11,7 +11,7 @@ import useSWR from "swr";
 // plane internal packages
 import { setPromiseToast, setToast, TOAST_TYPE } from "@plane/propel/toast";
 import type { TInstanceConfigurationKeys, TInstanceAuthenticationModes } from "@plane/types";
-import { Loader, ToggleSwitch } from "@plane/ui";
+import { Input, Loader, ToggleSwitch } from "@plane/ui";
 import { cn, resolveGeneralTheme } from "@plane/utils";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
@@ -36,6 +36,7 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
   const { fetchInstanceConfigurations, formattedConfig, updateInstanceConfigurations } = useInstance();
   // derived values
   const enableSignUpConfig = formattedConfig?.ENABLE_SIGNUP ?? "";
+  const allowedEmailDomainConfig = formattedConfig?.ALLOWED_EMAIL_DOMAIN ?? "";
 
   useSWR("INSTANCE_CONFIGURATIONS", () => fetchInstanceConfigurations());
 
@@ -143,6 +144,26 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
               </div>
             </div>
           </div>
+          <div className={cn("flex w-full items-center gap-14 rounded-sm")}>
+            <div className="flex grow items-center gap-4">
+              <div className="grow">
+                <div className="pb-1 text-16 font-medium">Restrict sign-ups to a specific email domain</div>
+                <div className={cn("text-11 leading-5 font-regular text-tertiary")}>
+                  Only users with this email domain (e.g., darkalphacapital.com) can sign up or sign in. Leave blank to
+                  allow all domains.
+                </div>
+              </div>
+            </div>
+            <div className={`shrink-0 pr-4 ${isSubmitting && "opacity-70"}`}>
+              <Input
+                value={allowedEmailDomainConfig}
+                onChange={(e) => updateConfig("ALLOWED_EMAIL_DOMAIN", e.target.value)}
+                placeholder="darkalphacapital.com"
+                className="w-64"
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
           <div className="text-lg pt-6 font-medium">Available authentication modes</div>
           {authenticationModes.map((method) => (
             <AuthenticationMethodCard
@@ -169,6 +190,6 @@ const InstanceAuthenticationPage = observer(function InstanceAuthenticationPage(
   );
 });
 
-export const meta: Route.MetaFunction = () => [{ title: "Authentication Settings - Plane Web" }];
+export const meta: Route.MetaFunction = () => [{ title: "Authentication Settings - DAC Project Planner" }];
 
 export default InstanceAuthenticationPage;

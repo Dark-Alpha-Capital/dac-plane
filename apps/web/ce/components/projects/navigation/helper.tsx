@@ -6,7 +6,15 @@
 
 // plane imports
 import { EUserPermissions, EProjectFeatureKey } from "@plane/constants";
-import { CycleIcon, IntakeIcon, ModuleIcon, PageIcon, ViewsIcon, WorkItemsIcon } from "@plane/propel/icons";
+import {
+  CycleIcon,
+  DashboardIcon,
+  IntakeIcon,
+  ModuleIcon,
+  PageIcon,
+  ViewsIcon,
+  WorkItemsIcon,
+} from "@plane/propel/icons";
 // components
 import type { TNavigationItem } from "@/components/workspace/sidebar/project-navigation";
 
@@ -21,6 +29,16 @@ export const getProjectFeatureNavigation = (
     inbox_view: boolean;
   }
 ): TNavigationItem[] => [
+  {
+    i18n_key: "sidebar.overview",
+    key: EProjectFeatureKey.OVERVIEW,
+    name: "Overview",
+    href: `/${workspaceSlug}/projects/${projectId}/overview`,
+    icon: DashboardIcon,
+    access: [EUserPermissions.ADMIN, EUserPermissions.MEMBER, EUserPermissions.GUEST],
+    shouldRender: true,
+    sortOrder: 0,
+  },
   {
     i18n_key: "sidebar.work_items",
     key: EProjectFeatureKey.WORK_ITEMS,

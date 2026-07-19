@@ -27,30 +27,30 @@ type TAuthHeader = {
 const Titles = {
   [EAuthModes.SIGN_IN]: {
     [EAuthSteps.EMAIL]: {
-      header: "Work in all dimensions.",
-      subHeader: "Welcome back to Plane.",
+      header: "Dark Alpha Capital",
+      subHeader: "Welcome back to DAC Project Planner.",
     },
     [EAuthSteps.PASSWORD]: {
-      header: "Work in all dimensions.",
-      subHeader: "Welcome back to Plane.",
+      header: "Dark Alpha Capital",
+      subHeader: "Welcome back to DAC Project Planner.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
-      header: "Work in all dimensions.",
-      subHeader: "Welcome back to Plane.",
+      header: "Dark Alpha Capital",
+      subHeader: "Welcome back to DAC Project Planner.",
     },
   },
   [EAuthModes.SIGN_UP]: {
     [EAuthSteps.EMAIL]: {
-      header: "Work in all dimensions.",
-      subHeader: "Create your Plane account.",
+      header: "Dark Alpha Capital",
+      subHeader: "Create your DAC Project Planner account.",
     },
     [EAuthSteps.PASSWORD]: {
-      header: "Work in all dimensions.",
-      subHeader: "Create your Plane account.",
+      header: "Dark Alpha Capital",
+      subHeader: "Create your DAC Project Planner account.",
     },
     [EAuthSteps.UNIQUE_CODE]: {
-      header: "Work in all dimensions.",
-      subHeader: "Create your Plane account.",
+      header: "Dark Alpha Capital",
+      subHeader: "Create your DAC Project Planner account.",
     },
   },
 };
@@ -74,11 +74,11 @@ export const AuthHeader = observer(function AuthHeader(props: TAuthHeader) {
   const getHeaderSubHeader = (
     step: EAuthSteps,
     mode: EAuthModes,
-    invitation: IWorkspaceMemberInvitation | undefined,
+    invitationData: IWorkspaceMemberInvitation | undefined,
     email: string | undefined
   ) => {
-    if (invitation && email && invitation.email === email && invitation.workspace) {
-      const workspace = invitation.workspace;
+    if (invitationData && email && invitationData.email === email && invitationData.workspace) {
+      const workspace = invitationData.workspace;
       return {
         header: (
           <div className="relative inline-flex items-center gap-2">

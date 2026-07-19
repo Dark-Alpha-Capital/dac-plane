@@ -24,6 +24,12 @@ authentication_config_variables = [
         "category": "AUTHENTICATION",
         "is_encrypted": False,
     },
+    {
+        "key": "ALLOWED_EMAIL_DOMAIN",
+        "value": os.environ.get("ALLOWED_EMAIL_DOMAIN", ""),
+        "category": "AUTHENTICATION",
+        "is_encrypted": False,
+    },
 ]
 
 workspace_management_config_variables = [

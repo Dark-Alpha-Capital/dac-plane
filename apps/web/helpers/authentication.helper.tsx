@@ -50,6 +50,7 @@ export enum EAuthenticationErrorCodes {
   INVALID_PASSWORD = "5020",
   PASSWORD_TOO_WEAK = "5021",
   SMTP_NOT_CONFIGURED = "5025",
+  EMAIL_DOMAIN_NOT_ALLOWED = "5026",
   // Sign Up
   USER_ALREADY_EXIST = "5030",
   AUTHENTICATION_FAILED_SIGN_UP = "5035",
@@ -145,6 +146,10 @@ const errorCodeMessages: {
   [EAuthenticationErrorCodes.BOT_USER_LOGIN_FORBIDDEN]: {
     title: `Sign in not allowed`,
     message: () => `This account cannot be used to sign in. Please use a personal account.`,
+  },
+  [EAuthenticationErrorCodes.EMAIL_DOMAIN_NOT_ALLOWED]: {
+    title: `Access restricted`,
+    message: () => `This instance is restricted to authorized email domains. Please use your company email.`,
   },
   [EAuthenticationErrorCodes.INVALID_PASSWORD]: {
     title: `Invalid password`,
@@ -387,6 +392,7 @@ export const authErrorHandler = (errorCode: EAuthenticationErrorCodes, email?: s
     EAuthenticationErrorCodes.PASSWORD_LOGIN_DISABLED,
     EAuthenticationErrorCodes.BOT_USER_LOGIN_FORBIDDEN,
     EAuthenticationErrorCodes.USER_ACCOUNT_DEACTIVATED,
+    EAuthenticationErrorCodes.EMAIL_DOMAIN_NOT_ALLOWED,
     EAuthenticationErrorCodes.INVALID_PASSWORD,
     EAuthenticationErrorCodes.SMTP_NOT_CONFIGURED,
     EAuthenticationErrorCodes.USER_ALREADY_EXIST,

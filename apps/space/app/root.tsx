@@ -19,13 +19,16 @@ import type { Route } from "./+types/root";
 import ErrorPage from "./error";
 import { AppProviders } from "./providers";
 // fonts
+// eslint-disable-next-line import/no-unassigned-import -- font side-effect
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+// eslint-disable-next-line import/no-unassigned-import -- font side-effect
 import "@fontsource/material-symbols-rounded";
+// eslint-disable-next-line import/no-unassigned-import -- font side-effect
 import "@fontsource/ibm-plex-mono";
 
-const APP_TITLE = "Plane Publish | Make your Plane boards public with one-click";
-const APP_DESCRIPTION = "Plane Publish is a customer feedback management tool built on top of plane.so";
+const APP_TITLE = "DAC Project Planner Publish";
+const APP_DESCRIPTION = "DAC Project Planner Publish — share project roadmaps publicly";
 
 export const links: Route.LinksFunction = () => [
   { rel: "apple-touch-icon", sizes: "180x180", href: appleTouchIcon },
@@ -74,13 +77,12 @@ export const meta: Route.MetaFunction = () => [
   { name: "description", content: APP_DESCRIPTION },
   { property: "og:title", content: APP_TITLE },
   { property: "og:description", content: APP_DESCRIPTION },
-  { property: "og:url", content: "https://sites.plane.so/" },
+  { property: "og:url", content: "https://dac.darkalphacapital.com/" },
   {
     name: "keywords",
-    content:
-      "software development, customer feedback, software, accelerate, code management, release management, project management, work item tracking, agile, scrum, kanban, collaboration",
+    content: "project management, project lifecycle, dark alpha capital",
   },
-  { name: "twitter:site", content: "@planepowers" },
+  { name: "twitter:site", content: "@darkalphacapital" },
 ];
 
 export default function Root() {

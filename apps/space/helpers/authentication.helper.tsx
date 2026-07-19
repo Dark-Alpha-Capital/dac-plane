@@ -34,6 +34,7 @@ export enum EAuthenticationErrorCodes {
   // Password strength
   INVALID_PASSWORD = "5020",
   SMTP_NOT_CONFIGURED = "5025",
+  EMAIL_DOMAIN_NOT_ALLOWED = "5026",
   // Sign Up
   USER_ALREADY_EXIST = "5030",
   AUTHENTICATION_FAILED_SIGN_UP = "5035",
@@ -111,6 +112,10 @@ const errorCodeMessages: {
   [EAuthenticationErrorCodes.SMTP_NOT_CONFIGURED]: {
     title: `SMTP not configured`,
     message: () => `SMTP not configured. Please contact your administrator.`,
+  },
+  [EAuthenticationErrorCodes.EMAIL_DOMAIN_NOT_ALLOWED]: {
+    title: `Access restricted`,
+    message: () => `This instance is restricted to authorized email domains. Please use your company email.`,
   },
 
   // email check in both sign up and sign in
@@ -351,6 +356,7 @@ export const authErrorHandler = (errorCode: EAuthenticationErrorCodes, email?: s
     EAuthenticationErrorCodes.SIGNUP_DISABLED,
     EAuthenticationErrorCodes.INVALID_PASSWORD,
     EAuthenticationErrorCodes.SMTP_NOT_CONFIGURED,
+    EAuthenticationErrorCodes.EMAIL_DOMAIN_NOT_ALLOWED,
     EAuthenticationErrorCodes.USER_ALREADY_EXIST,
     EAuthenticationErrorCodes.AUTHENTICATION_FAILED_SIGN_UP,
     EAuthenticationErrorCodes.REQUIRED_EMAIL_PASSWORD_SIGN_UP,
