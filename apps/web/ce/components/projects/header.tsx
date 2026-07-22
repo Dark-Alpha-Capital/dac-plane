@@ -5,7 +5,8 @@
  */
 
 import { ProjectsBaseHeader } from "@/components/project/header";
+import { EmbedSheetToggle } from "./embed-sheet-toggle";
 
 export function ProjectsListHeader() {
-  return <ProjectsBaseHeader />;
+  return <ProjectsBaseHeader rightSlot={<EmbedSheetToggle />} />;
 }

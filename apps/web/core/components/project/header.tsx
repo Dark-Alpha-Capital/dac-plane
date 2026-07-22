@@ -23,7 +23,7 @@ import { useUserPermissions } from "@/hooks/store/user";
 import HeaderFilters from "./filters";
 import { ProjectSearch } from "./search-projects";
 
-export const ProjectsBaseHeader = observer(function ProjectsBaseHeader() {
+export const ProjectsBaseHeader = observer(function ProjectsBaseHeader({ rightSlot }: { rightSlot?: React.ReactNode }) {
   // i18n
   const { t } = useTranslation();
   // store hooks
@@ -58,6 +58,7 @@ export const ProjectsBaseHeader = observer(function ProjectsBaseHeader() {
         <div className="hidden md:flex">
           <HeaderFilters />
         </div>
+        {rightSlot}
         {isAuthorizedUser && !isArchived ? (
           <Button
             variant="primary"

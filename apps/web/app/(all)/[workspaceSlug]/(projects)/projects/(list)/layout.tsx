@@ -8,6 +8,7 @@ import { Outlet } from "react-router";
 // components
 import { AppHeader } from "@/components/core/app-header";
 import { ContentWrapper } from "@/components/core/content-wrapper";
+import { EmbedSheet } from "@/components/embed-sheet/root";
 // local components
 import { ProjectsListHeader } from "@/plane-web/components/projects/header";
 import { ProjectsListMobileHeader } from "@/plane-web/components/projects/mobile-header";
@@ -19,6 +20,7 @@ export default function ProjectListLayout() {
       <ContentWrapper>
         <Outlet />
       </ContentWrapper>
+      <EmbedSheet />
     </>
   );
 }
