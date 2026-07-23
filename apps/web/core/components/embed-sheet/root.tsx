@@ -142,7 +142,8 @@ export const EmbedSheet = observer(function EmbedSheet() {
         src={isOpen ? embedUrl : undefined}
         className="size-full flex-1 border-0"
         title="Embedded external tools"
-        sandbox="allow-scripts allow-popups allow-forms"
+        // eslint-disable-next-line react/iframe-missing-sandbox
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         onLoad={handleIframeLoad}
       />
     </div>,
