@@ -10,6 +10,7 @@ from plane.db.models import (
     Risk,
     RaciAssignment,
     TimelineItem,
+    ProjectAIEvaluation,
 )
 
 
@@ -116,3 +117,33 @@ class TimelineItemSerializer(BaseSerializer):
             "updated_by",
         ]
         read_only_fields = ["id", "workspace", "project", "created_at", "updated_at", "created_by", "updated_by"]
+
+
+class ProjectAIEvaluationSerializer(BaseSerializer):
+    class Meta:
+        model = ProjectAIEvaluation
+        fields = [
+            "id",
+            "workspace_id",
+            "project_id",
+            "score",
+            "analysis",
+            "recommendation",
+            "status",
+            "external_id",
+            "screened_at",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        ]
+        read_only_fields = [
+            "id",
+            "workspace",
+            "project",
+            "recommendation",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        ]

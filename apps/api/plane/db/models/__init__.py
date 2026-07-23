@@ -104,4 +104,5 @@ from .project_planning import (
     Risk,
     RaciAssignment,
     TimelineItem,
+    ProjectAIEvaluation,
 )

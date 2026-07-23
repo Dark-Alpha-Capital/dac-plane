@@ -11,7 +11,7 @@ import { useParams } from "next/navigation";
 import { useLocalStorage } from "@plane/hooks";
 import { CloseIcon } from "@plane/propel/icons";
 import { cn } from "@plane/utils";
-import { handleCreateProjectFromKickoff } from "./bridge";
+import { handleCreateProjectFromKickoff, handleUpsertAIEvaluation } from "./bridge";
 import {
   EMBED_SHEET_URL,
   EMBED_SHEET_WIDTH,
@@ -82,6 +82,40 @@ export const EmbedSheet = observer(function EmbedSheet() {
             requestId,
             success: false,
             error: error instanceof Error ? error.message : "Failed to create project",
+          });
+        }
+      }
+
+      if (type === EMBED_SHEET_MESSAGE_TYPES.UPSERT_AI_EVALUATION) {
+        try {
+          const projectId = data.projectId as string | undefined;
+          if (!projectId) {
+            throw new Error("projectId is required to upsert AI evaluation");
+          }
+          const evaluation = await handleUpsertAIEvaluation({
+            workspaceSlug: slug,
+            projectId,
+            score: typeof data.score === "number" ? data.score : null,
+            analysis: typeof data.analysis === "string" ? data.analysis : "",
+            status:
+              data.status === "pending" || data.status === "failed" || data.status === "completed"
+                ? data.status
+                : "completed",
+            externalId: typeof data.externalId === "string" ? data.externalId : null,
+            screenedAt: typeof data.screenedAt === "string" ? data.screenedAt : null,
+          });
+          sendToIframe({
+            type: EMBED_SHEET_MESSAGE_TYPES.UPSERT_AI_EVALUATION_RESULT,
+            requestId,
+            success: true,
+            evaluation,
+          });
+        } catch (error) {
+          sendToIframe({
+            type: EMBED_SHEET_MESSAGE_TYPES.UPSERT_AI_EVALUATION_RESULT,
+            requestId,
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to save AI evaluation",
           });
         }
       }

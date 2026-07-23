@@ -14,6 +14,7 @@ from plane.app.serializers.project_planning import (
     RiskSerializer,
     RaciAssignmentSerializer,
     TimelineItemSerializer,
+    ProjectAIEvaluationSerializer,
 )
 from plane.app.permissions import ROLE, allow_permission
 from plane.db.models import (
@@ -22,6 +23,7 @@ from plane.db.models import (
     Risk,
     RaciAssignment,
     TimelineItem,
+    ProjectAIEvaluation,
     Workspace,
 )
 
@@ -253,3 +255,55 @@ class TimelineItemViewSet(BaseViewSet):
         obj = TimelineItem.objects.get(pk=pk, workspace__slug=slug, project_id=project_id)
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProjectAIEvaluationViewSet(BaseViewSet):
+    """Singleton AI evaluation per project — GET retrieve, PUT upsert."""
+
+    serializer_class = ProjectAIEvaluationSerializer
+    model = ProjectAIEvaluation
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(project_id=self.kwargs.get("project_id"))
+        )
+
+    def _derive_recommendation(self, score):
+        return ProjectAIEvaluation.recommendation_for_score(score)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def retrieve(self, request, slug, project_id):
+        obj = self.get_queryset().first()
+        if not obj:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            ProjectAIEvaluationSerializer(obj).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def upsert(self, request, slug, project_id):
+        workspace = _get_workspace(self.kwargs)
+        obj = self.get_queryset().first()
+        data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
+        score = data.get("score")
+        if "recommendation" not in data or not data.get("recommendation"):
+            data["recommendation"] = self._derive_recommendation(
+                float(score) if score is not None and score != "" else None
+            )
+
+        if obj:
+            serializer = ProjectAIEvaluationSerializer(obj, data=data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ProjectAIEvaluationSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save(workspace_id=workspace.id, project_id=project_id)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

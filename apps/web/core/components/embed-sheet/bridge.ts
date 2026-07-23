@@ -189,3 +189,31 @@ export async function handleCreateProjectFromKickoff({
     },
   };
 }
+
+export type UpsertAIEvaluationArgs = {
+  workspaceSlug: string;
+  projectId: string;
+  score?: number | null;
+  analysis?: string;
+  status?: "pending" | "completed" | "failed";
+  externalId?: string | null;
+  screenedAt?: string | null;
+};
+
+export async function handleUpsertAIEvaluation({
+  workspaceSlug,
+  projectId,
+  score,
+  analysis,
+  status,
+  externalId,
+  screenedAt,
+}: UpsertAIEvaluationArgs) {
+  return overviewService.upsertAIEvaluation(workspaceSlug, projectId, {
+    score: score ?? null,
+    analysis: analysis ?? "",
+    status: status ?? "completed",
+    external_id: externalId ?? null,
+    screened_at: screenedAt ?? new Date().toISOString(),
+  });
+}

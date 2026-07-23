@@ -1,8 +1,8 @@
 import { observer } from "mobx-react";
 import useSWR from "swr";
-import { AlertTriangle, CheckCircle2, Clock, Target, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, Sparkles, Target, Users } from "lucide-react";
 // plane imports
-import type { IDeliverable, IRisk, ITimelineItem, IProjectFieldValue } from "@plane/types";
+import type { IDeliverable, IRisk, ITimelineItem, IProjectFieldValue, IProjectAIEvaluation } from "@plane/types";
 import { Loader } from "@plane/ui";
 // components
 import { PageHead } from "@/components/core/page-title";
@@ -26,6 +26,19 @@ const statusColors: Record<string, string> = {
   in_progress: "bg-blue-500/10 text-blue-500",
   completed: "bg-green-500/10 text-green-500",
   blocked: "bg-red-500/10 text-red-500",
+  failed: "bg-red-500/10 text-red-500",
+};
+
+const recommendationLabels: Record<string, string> = {
+  worth_taking: "Worth taking",
+  review_needed: "Review needed",
+  not_recommended: "Not recommended",
+};
+
+const recommendationColors: Record<string, string> = {
+  worth_taking: "bg-green-500/10 text-green-500",
+  review_needed: "bg-yellow-500/10 text-yellow-500",
+  not_recommended: "bg-red-500/10 text-red-500",
 };
 
 const raciColors: Record<string, string> = {
@@ -38,6 +51,11 @@ const raciColors: Record<string, string> = {
 function ProjectOverviewPage({ params }: Route.ComponentProps) {
   const { workspaceSlug, projectId } = params;
   const { currentProjectDetails } = useProject();
+
+  const { data: aiEvaluation, isLoading: loadingAIEvaluation } = useSWR(
+    workspaceSlug && projectId ? `OVERVIEW_AI_EVALUATION_${projectId}` : null,
+    () => overviewService.getAIEvaluation(workspaceSlug, projectId)
+  );
 
   const { data: deliverables, isLoading: loadingDeliverables } = useSWR(
     workspaceSlug && projectId ? `OVERVIEW_DELIVERABLES_${projectId}` : null,
@@ -70,7 +88,13 @@ function ProjectOverviewPage({ params }: Route.ComponentProps) {
   );
 
   const isLoading =
-    loadingDeliverables || loadingMilestones || loadingRisks || loadingRaci || loadingTimeline || loadingFields;
+    loadingAIEvaluation ||
+    loadingDeliverables ||
+    loadingMilestones ||
+    loadingRisks ||
+    loadingRaci ||
+    loadingTimeline ||
+    loadingFields;
 
   const pageTitle = currentProjectDetails?.name ? `${currentProjectDetails.name} - Overview` : "Project Overview";
 
@@ -94,6 +118,15 @@ function ProjectOverviewPage({ params }: Route.ComponentProps) {
             </Loader>
           ) : (
             <div className="space-y-6">
+              {/* AI Evaluation */}
+              <SectionCard title="AI Evaluation" icon={Sparkles}>
+                {aiEvaluation ? (
+                  <AIEvaluationCard evaluation={aiEvaluation} />
+                ) : (
+                  <EmptyMessage>No AI screening yet. Create a project from kickoff to generate one.</EmptyMessage>
+                )}
+              </SectionCard>
+
               {/* Deliverables + Milestones */}
               <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                 <SectionCard title="Deliverables" count={deliverables?.length ?? 0} icon={CheckCircle2}>
@@ -224,7 +257,7 @@ function ProjectOverviewPage({ params }: Route.ComponentProps) {
                 {timelineItems && timelineItems.length > 0 ? (
                   <div className="space-y-1">
                     {[...timelineItems]
-                      .sort((a, b) => new Date(a.target_date).getTime() - new Date(b.target_date).getTime())
+                      .toSorted((a, b) => new Date(a.target_date).getTime() - new Date(b.target_date).getTime())
                       .map((ti: ITimelineItem) => (
                         <div key={ti.id} className="flex items-center gap-3 rounded p-2 hover:bg-layer-1">
                           <div className="bg-blue-500/10 text-xs text-blue-500 flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-medium">
@@ -274,6 +307,36 @@ function ProjectOverviewPage({ params }: Route.ComponentProps) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function AIEvaluationCard({ evaluation }: { evaluation: IProjectAIEvaluation }) {
+  const recommendation = evaluation.recommendation || "";
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="text-h3-semibold text-primary">
+          {evaluation.score != null ? `${evaluation.score}` : "—"}
+          <span className="text-sm text-tertiary font-normal"> / 5</span>
+        </div>
+        {recommendation ? (
+          <span
+            className={`text-2xs rounded px-1.5 py-0.5 ${recommendationColors[recommendation] || "bg-gray-500/10 text-gray-500"}`}
+          >
+            {recommendationLabels[recommendation] || recommendation}
+          </span>
+        ) : null}
+        <span className={`text-2xs rounded px-1.5 py-0.5 capitalize ${statusColors[evaluation.status] || ""}`}>
+          {evaluation.status}
+        </span>
+      </div>
+      {evaluation.analysis ? <p className="text-sm text-secondary leading-relaxed">{evaluation.analysis}</p> : null}
+      {evaluation.screened_at ? (
+        <p className="text-2xs text-tertiary">
+          Screened {new Date(evaluation.screened_at).toLocaleString()}
+        </p>
+      ) : null}
     </div>
   );
 }

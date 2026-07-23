@@ -10,6 +10,7 @@ from plane.app.views.project_planning import (
     RiskViewSet,
     RaciAssignmentViewSet,
     TimelineItemViewSet,
+    ProjectAIEvaluationViewSet,
 )
 
 
@@ -78,5 +79,11 @@ urlpatterns = [
             {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
         ),
         name="project-timeline-item",
+    ),
+    # AI Evaluation (singleton per project)
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/ai-evaluation/",
+        ProjectAIEvaluationViewSet.as_view({"get": "retrieve", "put": "upsert"}),
+        name="project-ai-evaluation",
     ),
 ]

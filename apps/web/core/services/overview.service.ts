@@ -13,6 +13,8 @@ import type {
   ITimelineItem,
   IProjectFieldValue,
   IProjectFieldSchema,
+  IProjectAIEvaluation,
+  TProjectAIEvaluationUpsert,
 } from "@plane/types";
 import { APIService } from "@/services/api.service";
 
@@ -183,6 +185,27 @@ export class ProjectOverviewService extends APIService {
 
   async getFieldSchemas(workspaceSlug: string): Promise<IProjectFieldSchema[]> {
     return this.get(`/api/workspaces/${workspaceSlug}/project-field-schemas/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getAIEvaluation(workspaceSlug: string, projectId: string): Promise<IProjectAIEvaluation | null> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/ai-evaluation/`)
+      .then((response) => response?.data ?? null)
+      .catch((error) => {
+        if (error?.response?.status === 404) return null;
+        throw error?.response?.data;
+      });
+  }
+
+  async upsertAIEvaluation(
+    workspaceSlug: string,
+    projectId: string,
+    data: TProjectAIEvaluationUpsert
+  ): Promise<IProjectAIEvaluation> {
+    return this.put(`/api/workspaces/${workspaceSlug}/projects/${projectId}/ai-evaluation/`, data)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

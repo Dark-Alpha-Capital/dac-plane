@@ -5,6 +5,7 @@
  */
 
 export * from "./activity";
+export * from "./ai_evaluation";
 export * from "./deliverable";
 export * from "./milestone";
 export * from "./project_filters";

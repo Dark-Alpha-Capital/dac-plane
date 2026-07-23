@@ -149,3 +149,55 @@ class TimelineItem(ProjectBaseModel):
 
     def __str__(self):
         return self.title
+
+
+class ProjectAIEvaluation(ProjectBaseModel):
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("completed", "Completed"),
+        ("failed", "Failed"),
+    )
+    RECOMMENDATION_CHOICES = (
+        ("worth_taking", "Worth taking"),
+        ("review_needed", "Review needed"),
+        ("not_recommended", "Not recommended"),
+    )
+
+    score = models.FloatField(null=True, blank=True)
+    analysis = models.TextField(blank=True, default="")
+    recommendation = models.CharField(
+        max_length=32,
+        choices=RECOMMENDATION_CHOICES,
+        blank=True,
+        default="",
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    external_id = models.CharField(max_length=255, blank=True, null=True)
+    screened_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Project AI Evaluation"
+        verbose_name_plural = "Project AI Evaluations"
+        db_table = "project_ai_evaluations"
+        # One current evaluation per project
+        constraints = [
+            models.UniqueConstraint(
+                fields=["project"],
+                condition=models.Q(deleted_at__isnull=True),
+                name="unique_project_ai_evaluation_active",
+            )
+        ]
+        ordering = ("-screened_at", "-updated_at")
+
+    def __str__(self):
+        return f"{self.project_id} score={self.score}"
+
+    @staticmethod
+    def recommendation_for_score(score):
+        if score is None:
+            return ""
+        if score >= 3.5:
+            return "worth_taking"
+        if score >= 2:
+            return "review_needed"
+        return "not_recommended"
