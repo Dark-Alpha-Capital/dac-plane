@@ -81,8 +81,7 @@ export const EmbedSheet = observer(function EmbedSheet() {
             type: EMBED_SHEET_MESSAGE_TYPES.CREATE_PROJECT_RESULT,
             requestId,
             success: false,
-            error:
-              error instanceof Error ? error.message : typeof error === "string" ? error : "Failed to create project",
+            error: error instanceof Error ? error.message : "Failed to create project",
           });
         }
       }
@@ -116,12 +115,7 @@ export const EmbedSheet = observer(function EmbedSheet() {
             type: EMBED_SHEET_MESSAGE_TYPES.UPSERT_AI_EVALUATION_RESULT,
             requestId,
             success: false,
-            error:
-              error instanceof Error
-                ? error.message
-                : typeof error === "string"
-                  ? error
-                  : "Failed to save AI evaluation",
+            error: error instanceof Error ? error.message : "Failed to save AI evaluation",
           });
         }
       }

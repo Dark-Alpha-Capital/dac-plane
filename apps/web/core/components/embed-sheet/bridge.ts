@@ -56,40 +56,24 @@ interface CreateProjectFromKickoffArgs {
   externalId?: string;
 }
 
-function buildDescription(kickoff: KickoffPayload): string {
-  const lines: string[] = [];
-  const {
-    projectName,
-    department,
-    projectOwners,
-    engineeringLead,
-    objectives,
-    platformEnables,
-    keyDeliverables,
-    risksAndBlockers,
-    chosenTool,
-    techStack,
-    additionalNotes,
-  } = kickoff;
+/** Plane rejects names containing: &+,:;$^}{*=?@#|'<>.()%!- */
+function sanitizeName(name: string): string {
+  return (
+    name
+      .replace(/[&+,:;$^}{*=?@#|'<>.()%!-]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 255) || "Untitled Project"
+  );
+}
 
-  lines.push(`# ${projectName}`);
-  if (department) lines.push(`**Department:** ${department}`);
-  lines.push("");
-  if (objectives) lines.push(`## Objectives\n${objectives}`);
-  if (projectOwners?.length) lines.push(`## Project Owners\n${projectOwners.map((o) => `- ${o}`).join("\n")}`);
-  if (engineeringLead) lines.push(`## Engineering Lead\n${engineeringLead}`);
-  if (platformEnables?.length) lines.push(`## Platform Enables\n${platformEnables.map((p) => `- ${p}`).join("\n")}`);
-  if (keyDeliverables?.length) lines.push(`## Key Deliverables\n${keyDeliverables.map((d) => `- ${d}`).join("\n")}`);
-  if (risksAndBlockers?.length) lines.push(`## Risks & Blockers\n${risksAndBlockers.map((r) => `- ${r}`).join("\n")}`);
-  if (techStack) lines.push(`## Tech Stack\n${techStack}`);
-  if (chosenTool) lines.push(`## Chosen Tool\n${chosenTool}`);
-  if (additionalNotes) lines.push(`## Additional Notes\n${additionalNotes}`);
-  lines.push("");
-  lines.push("---");
-  lines.push("```json");
-  lines.push(JSON.stringify(kickoff, null, 2));
-  lines.push("```");
-  return lines.join("\n");
+function sanitizeIdentifier(raw: string): string {
+  return (
+    raw
+      .replace(/[^A-Za-z0-9]/g, "")
+      .toUpperCase()
+      .slice(0, 5) || "PROJ"
+  );
 }
 
 function mapStatus(status: string | null | undefined): string {
@@ -98,77 +82,32 @@ function mapStatus(status: string | null | undefined): string {
   return "pending";
 }
 
-function sanitizeIdentifier(raw: string): string {
-  const cleaned = raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-  return cleaned.slice(0, 5) || "PROJ";
-}
-
-function randomIdentifierSuffix(length = 2): string {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let out = "";
-  for (let i = 0; i < length; i++) {
-    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+function buildDescription(kickoff: KickoffPayload): string {
+  const parts = [`# ${kickoff.projectName}`];
+  if (kickoff.department) parts.push(`**Department:** ${kickoff.department}`);
+  if (kickoff.objectives) parts.push(`## Objectives\n${kickoff.objectives}`);
+  if (kickoff.projectOwners?.length) {
+    parts.push(`## Project Owners\n${kickoff.projectOwners.map((o) => `- ${o}`).join("\n")}`);
   }
-  return out;
-}
-
-async function resolveAvailableIdentifier(
-  workspaceSlug: string,
-  preferred: string
-): Promise<string> {
-  const base = sanitizeIdentifier(preferred);
-
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const candidate =
-      attempt === 0
-        ? base
-        : sanitizeIdentifier(`${base.slice(0, Math.max(1, 5 - 2))}${randomIdentifierSuffix(2)}`);
-
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      const availability = await projectApiService.checkProjectIdentifierAvailability(
-        workspaceSlug,
-        candidate
-      );
-      if (!availability?.exists) {
-        return candidate;
-      }
-    } catch {
-      // If availability check fails, still try create with this candidate.
-      return candidate;
-    }
+  if (kickoff.keyDeliverables?.length) {
+    parts.push(`## Key Deliverables\n${kickoff.keyDeliverables.map((d) => `- ${d}`).join("\n")}`);
   }
-
-  return sanitizeIdentifier(`${base.slice(0, 2)}${randomIdentifierSuffix(3)}`);
+  if (kickoff.additionalNotes) parts.push(`## Notes\n${kickoff.additionalNotes}`);
+  return parts.join("\n\n").slice(0, 4000);
 }
 
-function extractApiErrorMessage(error: unknown): string {
+function apiErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message;
   if (typeof error === "string" && error.trim()) return error;
-
   if (error && typeof error === "object") {
-    const record = error as Record<string, unknown>;
-    const data = record.data;
-    if (data && typeof data === "object") {
-      const dataRecord = data as Record<string, unknown>;
-      if (typeof dataRecord.error === "string" && dataRecord.error.trim()) {
-        return dataRecord.error;
-      }
-      if (typeof dataRecord.detail === "string" && dataRecord.detail.trim()) {
-        return dataRecord.detail;
-      }
-      if (typeof dataRecord.message === "string" && dataRecord.message.trim()) {
-        return dataRecord.message;
-      }
-    }
-    if (typeof record.error === "string" && record.error.trim()) return record.error;
-    if (typeof record.detail === "string" && record.detail.trim()) return record.detail;
-    if (typeof record.message === "string" && record.message.trim()) return record.message;
-    if (typeof record.statusText === "string" && record.statusText.trim()) {
-      return record.statusText;
-    }
+    const data = ("data" in error ? (error as { data: unknown }).data : error) as Record<string, unknown>;
+    if (typeof data?.error === "string") return data.error;
+    if (typeof data?.detail === "string") return data.detail;
+    const nameErr = data?.name;
+    if (Array.isArray(nameErr) && nameErr[0]) return `name: ${String(nameErr[0])}`;
+    const idErr = data?.identifier;
+    if (Array.isArray(idErr) && idErr[0]) return `identifier: ${String(idErr[0])}`;
   }
-
   return "Failed to create project";
 }
 
@@ -180,82 +119,82 @@ export async function handleCreateProjectFromKickoff({
   externalSource,
   externalId,
 }: CreateProjectFromKickoffArgs) {
-  const description = buildDescription(kickoff);
-  const resolvedIdentifier = await resolveAvailableIdentifier(workspaceSlug, identifier);
+  const safeName = sanitizeName(name || kickoff.projectName || "Untitled Project");
+  const safeIdentifier = sanitizeIdentifier(identifier);
 
   let project;
   try {
     project = await projectApiService.createProject(workspaceSlug, {
-      name,
-      identifier: resolvedIdentifier,
-      description,
+      name: safeName,
+      identifier: safeIdentifier,
+      description: buildDescription({ ...kickoff, projectName: safeName }),
+      network: 2,
       ...(externalSource ? { external_source: externalSource } : {}),
       ...(externalId ? { external_id: externalId } : {}),
     } as Parameters<typeof projectApiService.createProject>[1]);
   } catch (error) {
-    throw new Error(extractApiErrorMessage(error), { cause: error });
+    throw new Error(apiErrorMessage(error), { cause: error });
+  }
+
+  if (!project?.id) {
+    throw new Error("Plane did not return a project id");
   }
 
   const projectId = project.id;
 
-  const milestonePromises =
-    kickoff.timeline?.map((t) =>
-      overviewService
-        .createMilestone(workspaceSlug, projectId, {
-          name: t.milestone,
-          status: mapStatus(t.status),
-          definition_of_done: JSON.stringify(
-            kickoff.definitionOfDone?.find((d) => d.milestone === t.milestone)?.criteria ?? []
-          ),
-        })
-        .catch(() => null)
-    ) ?? [];
-
-  const timelinePromises =
-    kickoff.timeline?.map((t) =>
-      overviewService
-        .createTimelineItem(workspaceSlug, projectId, {
-          title: t.milestone,
-          target_date: t.targetDate ?? undefined,
-        })
-        .catch(() => null)
-    ) ?? [];
-
-  const riskPromises =
-    kickoff.risksAndBlockers?.map((desc) =>
-      overviewService.createRisk(workspaceSlug, projectId, { description: desc }).catch(() => null)
-    ) ?? [];
-
-  const raciPromises: Promise<unknown>[] = [];
-  if (kickoff.raciMatrix) {
-    for (const raci of kickoff.raciMatrix) {
-      const roles = [
-        { role: raci.responsible, responsibility: "responsible" },
-        { role: raci.accountable, responsibility: "accountable" },
-        { role: raci.consulted, responsibility: "consulted" },
-        { role: raci.informed, responsibility: "informed" },
-      ].filter((r) => r.role);
-      for (const { responsibility } of roles) {
-        raciPromises.push(
-          overviewService
-            .createRaciAssignment(workspaceSlug, projectId, { area: raci.area, responsibility })
-            .catch(() => null)
-        );
-      }
-    }
-  }
-
-  const deliverablePromises =
-    kickoff.keyDeliverables?.map((title) =>
-      overviewService.createDeliverable(workspaceSlug, projectId, { title }).catch(() => null)
-    ) ?? [];
-
   const [milestones, risks, raci, deliverables, timelineItems] = await Promise.all([
-    Promise.all(milestonePromises),
-    Promise.all(riskPromises),
-    Promise.all(raciPromises),
-    Promise.all(deliverablePromises),
-    Promise.all(timelinePromises),
+    Promise.all(
+      kickoff.timeline?.map((t) =>
+        overviewService
+          .createMilestone(workspaceSlug, projectId, {
+            name: t.milestone,
+            status: mapStatus(t.status),
+            definition_of_done: JSON.stringify(
+              kickoff.definitionOfDone?.find((d) => d.milestone === t.milestone)?.criteria ?? []
+            ),
+          })
+          .catch(() => null)
+      ) ?? []
+    ),
+    Promise.all(
+      kickoff.risksAndBlockers?.map((desc) =>
+        overviewService.createRisk(workspaceSlug, projectId, { description: desc }).catch(() => null)
+      ) ?? []
+    ),
+    Promise.all(
+      (kickoff.raciMatrix ?? []).flatMap((row) =>
+        [
+          { role: row.responsible, responsibility: "responsible" },
+          { role: row.accountable, responsibility: "accountable" },
+          { role: row.consulted, responsibility: "consulted" },
+          { role: row.informed, responsibility: "informed" },
+        ]
+          .filter((r) => r.role)
+          .map(({ responsibility }) =>
+            overviewService
+              .createRaciAssignment(workspaceSlug, projectId, {
+                area: row.area,
+                responsibility,
+              })
+              .catch(() => null)
+          )
+      )
+    ),
+    Promise.all(
+      kickoff.keyDeliverables?.map((title) =>
+        overviewService.createDeliverable(workspaceSlug, projectId, { title }).catch(() => null)
+      ) ?? []
+    ),
+    Promise.all(
+      kickoff.timeline?.map((t) =>
+        overviewService
+          .createTimelineItem(workspaceSlug, projectId, {
+            title: t.milestone,
+            target_date: t.targetDate ?? undefined,
+          })
+          .catch(() => null)
+      ) ?? []
+    ),
   ]);
 
   return {
