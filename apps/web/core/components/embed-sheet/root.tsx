@@ -48,18 +48,23 @@ export const EmbedSheet = observer(function EmbedSheet() {
     const handleMessage = async (event: MessageEvent) => {
       if (!iframeRef.current || event.source !== iframeRef.current.contentWindow) return;
 
-      const { type, data, requestId } = event.data || {};
+      const message = event.data || {};
+      const { type, requestId } = message;
+      // Accept nested `data` (preferred) or top-level fields for backwards compatibility.
+      const data = message.data ?? message;
 
       if (type === EMBED_SHEET_MESSAGE_TYPES.CREATE_PROJECT) {
         try {
+          const kickoff = data.kickoff ?? {};
+          const projectName = kickoff.projectName ?? data.name ?? "Untitled Project";
           const result = await handleCreateProjectFromKickoff({
             workspaceSlug: slug,
-            name: data.kickoff?.projectName ?? data.name ?? "Untitled Project",
+            name: projectName,
             identifier:
-              data.identifier ?? data.kickoff?.projectName?.substring(0, 5).toUpperCase().replace(/\s/g, "") ?? "PROJ",
+              data.identifier ?? String(projectName).substring(0, 5).toUpperCase().replace(/\s/g, "") ?? "PROJ",
             kickoff: {
-              projectName: data.kickoff?.projectName ?? data.name ?? "Untitled Project",
-              ...data.kickoff,
+              projectName,
+              ...kickoff,
             },
             externalSource: EMBED_EXTERNAL_SOURCE,
             externalId: data.externalId,

@@ -22,7 +22,12 @@ from plane.db.models import (
     Risk,
     RaciAssignment,
     TimelineItem,
+    Workspace,
 )
+
+
+def _get_workspace(kwargs):
+    return Workspace.objects.get(slug=kwargs.get("slug"))
 
 
 class DeliverableViewSet(BaseViewSet):
@@ -37,14 +42,15 @@ class DeliverableViewSet(BaseViewSet):
             .filter(project_id=self.kwargs.get("project_id"))
         )
 
+    def perform_create(self, serializer):
+        workspace = _get_workspace(self.kwargs)
+        serializer.save(workspace_id=workspace.id, project_id=self.kwargs.get("project_id"))
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id):
         serializer = DeliverableSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(
-                workspace_id=self.kwargs.get("workspace_id"),
-                project_id=project_id,
-            )
+            self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -81,14 +87,15 @@ class MilestoneViewSet(BaseViewSet):
             .filter(project_id=self.kwargs.get("project_id"))
         )
 
+    def perform_create(self, serializer):
+        workspace = _get_workspace(self.kwargs)
+        serializer.save(workspace_id=workspace.id, project_id=self.kwargs.get("project_id"))
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id):
         serializer = MilestoneSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(
-                workspace_id=self.kwargs.get("workspace_id"),
-                project_id=project_id,
-            )
+            self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -125,14 +132,15 @@ class RiskViewSet(BaseViewSet):
             .filter(project_id=self.kwargs.get("project_id"))
         )
 
+    def perform_create(self, serializer):
+        workspace = _get_workspace(self.kwargs)
+        serializer.save(workspace_id=workspace.id, project_id=self.kwargs.get("project_id"))
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id):
         serializer = RiskSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(
-                workspace_id=self.kwargs.get("workspace_id"),
-                project_id=project_id,
-            )
+            self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -169,14 +177,15 @@ class RaciAssignmentViewSet(BaseViewSet):
             .filter(project_id=self.kwargs.get("project_id"))
         )
 
+    def perform_create(self, serializer):
+        workspace = _get_workspace(self.kwargs)
+        serializer.save(workspace_id=workspace.id, project_id=self.kwargs.get("project_id"))
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id):
         serializer = RaciAssignmentSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(
-                workspace_id=self.kwargs.get("workspace_id"),
-                project_id=project_id,
-            )
+            self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -213,14 +222,15 @@ class TimelineItemViewSet(BaseViewSet):
             .filter(project_id=self.kwargs.get("project_id"))
         )
 
+    def perform_create(self, serializer):
+        workspace = _get_workspace(self.kwargs)
+        serializer.save(workspace_id=workspace.id, project_id=self.kwargs.get("project_id"))
+
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id):
         serializer = TimelineItemSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(
-                workspace_id=self.kwargs.get("workspace_id"),
-                project_id=project_id,
-            )
+            self.perform_create(serializer)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

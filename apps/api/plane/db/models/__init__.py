@@ -90,3 +90,18 @@ from .device import Device, DeviceSession
 from .sticky import Sticky
 
 from .description import Description, DescriptionVersion
+
+from .project_meta import (
+    ProjectFieldSchema,
+    ProjectFieldValue,
+    ProjectFieldSchemaTemplate,
+    ProjectFieldSchemaTemplateItem,
+)
+
+from .project_planning import (
+    Deliverable,
+    Milestone,
+    Risk,
+    RaciAssignment,
+    TimelineItem,
+)

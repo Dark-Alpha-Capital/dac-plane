@@ -238,3 +238,17 @@ from .notification.base import MarkAllReadNotificationViewSet
 from .user.base import AccountEndpoint, ProfileEndpoint, UserSessionEndpoint
 
 from .timezone.base import TimezoneEndpoint
+
+from .project_meta import (
+    ProjectFieldSchemaViewSet,
+    ProjectFieldValueViewSet,
+    ProjectFieldValuesBulkUpdateEndpoint,
+)
+
+from .project_planning import (
+    DeliverableViewSet,
+    MilestoneViewSet,
+    RiskViewSet,
+    RaciAssignmentViewSet,
+    TimelineItemViewSet,
+)

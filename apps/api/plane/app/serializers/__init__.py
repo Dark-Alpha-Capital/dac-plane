@@ -135,3 +135,16 @@ from .draft import (
     DraftIssueSerializer,
     DraftIssueDetailSerializer,
 )
+
+from .project_meta import (
+    ProjectFieldSchemaSerializer,
+    ProjectFieldValueSerializer,
+)
+
+from .project_planning import (
+    DeliverableSerializer,
+    MilestoneSerializer,
+    RiskSerializer,
+    RaciAssignmentSerializer,
+    TimelineItemSerializer,
+)
