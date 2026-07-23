@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+# Third party imports
+from rest_framework import serializers
+
 # Module imports
 from .base import BaseSerializer
 from plane.db.models import (
@@ -37,6 +40,12 @@ class DeliverableSerializer(BaseSerializer):
 
 class MilestoneSerializer(BaseSerializer):
     deliverable_details = DeliverableSerializer(source="deliverables", many=True, read_only=True)
+    deliverable_ids = serializers.PrimaryKeyRelatedField(
+        source="deliverables",
+        many=True,
+        queryset=Deliverable.objects.all(),
+        required=False,
+    )
 
     class Meta:
         model = Milestone
@@ -141,7 +150,6 @@ class ProjectAIEvaluationSerializer(BaseSerializer):
             "id",
             "workspace",
             "project",
-            "recommendation",
             "created_at",
             "updated_at",
             "created_by",

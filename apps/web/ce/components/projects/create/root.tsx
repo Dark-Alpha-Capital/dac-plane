@@ -22,6 +22,12 @@ import { usePlatformOS } from "@/hooks/use-platform-os";
 // plane web types
 import type { TProject } from "@plane/types";
 import { ProjectAttributes } from "./attributes";
+import {
+  emptyPlanningData,
+  ProjectPlanningAttributes,
+  seedProjectPlanning,
+  type TCreateProjectPlanningData,
+} from "./planning-attributes";
 import { getProjectFormValues } from "./utils";
 
 export type TCreateProjectFormProps = {
@@ -41,6 +47,7 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
   const { addProjectToFavorites, createProject, updateProject } = useProject();
   // states
   const [shouldAutoSyncIdentifier, setShouldAutoSyncIdentifier] = useState(true);
+  const [planningData, setPlanningData] = useState<TCreateProjectPlanningData>(() => emptyPlanningData());
   // form info
   const methods = useForm<TProject>({
     defaultValues: { ...getProjectFormValues(), ...data },
@@ -101,6 +108,13 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
           await updateCoverImageStatus(res.id, coverImage);
           await updateProject(workspaceSlug.toString(), res.id, { cover_image_url: coverImage });
         }
+
+        try {
+          await seedProjectPlanning(workspaceSlug.toString(), res.id, planningData);
+        } catch (error) {
+          console.error("Failed to seed project planning data:", error);
+        }
+
         setToast({
           type: TOAST_TYPE.SUCCESS,
           title: t("success"),
@@ -167,6 +181,7 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
   const handleClose = () => {
     onClose();
     setShouldAutoSyncIdentifier(true);
+    setPlanningData(emptyPlanningData());
     setTimeout(() => {
       reset();
     }, 300);
@@ -185,6 +200,7 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
             setShouldAutoSyncIdentifier={setShouldAutoSyncIdentifier}
           />
           <ProjectAttributes isMobile={isMobile} />
+          <ProjectPlanningAttributes value={planningData} onChange={setPlanningData} />
         </div>
         <ProjectCreateButtons handleClose={handleClose} />
       </form>
