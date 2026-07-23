@@ -98,6 +98,80 @@ function mapStatus(status: string | null | undefined): string {
   return "pending";
 }
 
+function sanitizeIdentifier(raw: string): string {
+  const cleaned = raw.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
+  return cleaned.slice(0, 5) || "PROJ";
+}
+
+function randomIdentifierSuffix(length = 2): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let out = "";
+  for (let i = 0; i < length; i++) {
+    out += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return out;
+}
+
+async function resolveAvailableIdentifier(
+  workspaceSlug: string,
+  preferred: string
+): Promise<string> {
+  const base = sanitizeIdentifier(preferred);
+
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate =
+      attempt === 0
+        ? base
+        : sanitizeIdentifier(`${base.slice(0, Math.max(1, 5 - 2))}${randomIdentifierSuffix(2)}`);
+
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const availability = await projectApiService.checkProjectIdentifierAvailability(
+        workspaceSlug,
+        candidate
+      );
+      if (!availability?.exists) {
+        return candidate;
+      }
+    } catch {
+      // If availability check fails, still try create with this candidate.
+      return candidate;
+    }
+  }
+
+  return sanitizeIdentifier(`${base.slice(0, 2)}${randomIdentifierSuffix(3)}`);
+}
+
+function extractApiErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  if (typeof error === "string" && error.trim()) return error;
+
+  if (error && typeof error === "object") {
+    const record = error as Record<string, unknown>;
+    const data = record.data;
+    if (data && typeof data === "object") {
+      const dataRecord = data as Record<string, unknown>;
+      if (typeof dataRecord.error === "string" && dataRecord.error.trim()) {
+        return dataRecord.error;
+      }
+      if (typeof dataRecord.detail === "string" && dataRecord.detail.trim()) {
+        return dataRecord.detail;
+      }
+      if (typeof dataRecord.message === "string" && dataRecord.message.trim()) {
+        return dataRecord.message;
+      }
+    }
+    if (typeof record.error === "string" && record.error.trim()) return record.error;
+    if (typeof record.detail === "string" && record.detail.trim()) return record.detail;
+    if (typeof record.message === "string" && record.message.trim()) return record.message;
+    if (typeof record.statusText === "string" && record.statusText.trim()) {
+      return record.statusText;
+    }
+  }
+
+  return "Failed to create project";
+}
+
 export async function handleCreateProjectFromKickoff({
   workspaceSlug,
   name,
@@ -107,14 +181,20 @@ export async function handleCreateProjectFromKickoff({
   externalId,
 }: CreateProjectFromKickoffArgs) {
   const description = buildDescription(kickoff);
+  const resolvedIdentifier = await resolveAvailableIdentifier(workspaceSlug, identifier);
 
-  const project = await projectApiService.createProject(workspaceSlug, {
-    name,
-    identifier,
-    description,
-    ...(externalSource ? { external_source: externalSource } : {}),
-    ...(externalId ? { external_id: externalId } : {}),
-  } as Parameters<typeof projectApiService.createProject>[1]);
+  let project;
+  try {
+    project = await projectApiService.createProject(workspaceSlug, {
+      name,
+      identifier: resolvedIdentifier,
+      description,
+      ...(externalSource ? { external_source: externalSource } : {}),
+      ...(externalId ? { external_id: externalId } : {}),
+    } as Parameters<typeof projectApiService.createProject>[1]);
+  } catch (error) {
+    throw new Error(extractApiErrorMessage(error), { cause: error });
+  }
 
   const projectId = project.id;
 
