@@ -101,6 +101,7 @@ from .project_meta import (
 from .project_planning import (
     Deliverable,
     Milestone,
+    Objective,
     Risk,
     RaciAssignment,
     TimelineItem,

@@ -144,6 +144,7 @@ from .project_meta import (
 from .project_planning import (
     DeliverableSerializer,
     MilestoneSerializer,
+    ObjectiveSerializer,
     RiskSerializer,
     RaciAssignmentSerializer,
     TimelineItemSerializer,

@@ -10,6 +10,7 @@ from .base import BaseSerializer
 from plane.db.models import (
     Deliverable,
     Milestone,
+    Objective,
     Risk,
     RaciAssignment,
     TimelineItem,
@@ -82,6 +83,25 @@ class RiskSerializer(BaseSerializer):
             "mitigation",
             "status",
             "owner_id",
+            "created_at",
+            "updated_at",
+            "created_by",
+            "updated_by",
+        ]
+        read_only_fields = ["id", "workspace", "project", "created_at", "updated_at", "created_by", "updated_by"]
+
+
+class ObjectiveSerializer(BaseSerializer):
+    class Meta:
+        model = Objective
+        fields = [
+            "id",
+            "workspace_id",
+            "project_id",
+            "title",
+            "description",
+            "status",
+            "sort_order",
             "created_at",
             "updated_at",
             "created_by",

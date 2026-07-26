@@ -8,6 +8,7 @@ export * from "./activity";
 export * from "./ai_evaluation";
 export * from "./deliverable";
 export * from "./milestone";
+export * from "./objective";
 export * from "./project_filters";
 export * from "./project_link";
 export * from "./project_meta";

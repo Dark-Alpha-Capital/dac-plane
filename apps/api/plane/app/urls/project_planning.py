@@ -7,6 +7,7 @@ from django.urls import path
 from plane.app.views.project_planning import (
     DeliverableViewSet,
     MilestoneViewSet,
+    ObjectiveViewSet,
     RiskViewSet,
     RaciAssignmentViewSet,
     TimelineItemViewSet,
@@ -53,6 +54,19 @@ urlpatterns = [
             {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
         ),
         name="project-risk",
+    ),
+    # Objectives
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/objectives/",
+        ObjectiveViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-objectives",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/objectives/<uuid:pk>/",
+        ObjectiveViewSet.as_view(
+            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="project-objective",
     ),
     # RACI Assignments
     path(

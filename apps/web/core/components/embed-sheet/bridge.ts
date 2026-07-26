@@ -85,12 +85,8 @@ function mapStatus(status: string | null | undefined): string {
 function buildDescription(kickoff: KickoffPayload): string {
   const parts = [`# ${kickoff.projectName}`];
   if (kickoff.department) parts.push(`**Department:** ${kickoff.department}`);
-  if (kickoff.objectives) parts.push(`## Objectives\n${kickoff.objectives}`);
   if (kickoff.projectOwners?.length) {
     parts.push(`## Project Owners\n${kickoff.projectOwners.map((o) => `- ${o}`).join("\n")}`);
-  }
-  if (kickoff.keyDeliverables?.length) {
-    parts.push(`## Key Deliverables\n${kickoff.keyDeliverables.map((d) => `- ${d}`).join("\n")}`);
   }
   if (kickoff.additionalNotes) parts.push(`## Notes\n${kickoff.additionalNotes}`);
   return parts.join("\n\n").slice(0, 4000);
@@ -142,7 +138,7 @@ export async function handleCreateProjectFromKickoff({
 
   const projectId = project.id;
 
-  const [milestones, risks, raci, deliverables, timelineItems] = await Promise.all([
+  const [milestones, objectives, risks, raci, deliverables, timelineItems] = await Promise.all([
     Promise.all(
       kickoff.timeline?.map((t) =>
         overviewService
@@ -155,6 +151,15 @@ export async function handleCreateProjectFromKickoff({
           })
           .catch(() => null)
       ) ?? []
+    ),
+    Promise.all(
+      kickoff.objectives
+        ? kickoff.objectives
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((title) => overviewService.createObjective(workspaceSlug, projectId, { title }).catch(() => null))
+        : []
     ),
     Promise.all(
       kickoff.risksAndBlockers?.map((desc) =>
@@ -201,6 +206,7 @@ export async function handleCreateProjectFromKickoff({
     project,
     results: {
       milestones: milestones.filter(Boolean),
+      objectives: objectives.filter(Boolean),
       risks: risks.filter(Boolean),
       raci: raci.filter(Boolean),
       deliverables: deliverables.filter(Boolean),

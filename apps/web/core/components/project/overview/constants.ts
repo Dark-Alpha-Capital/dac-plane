@@ -4,23 +4,42 @@
  * See the LICENSE file for details.
  */
 
+export const priorityColors: Record<string, string> = {
+  high: "bg-red-500/10 text-red-500 border-red-500/20",
+  medium: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  low: "bg-green-500/10 text-green-500 border-green-500/20",
+};
+
 export const impactColors: Record<string, string> = {
-  low: "bg-green-500/10 text-green-500",
-  medium: "bg-yellow-500/10 text-yellow-500",
-  high: "bg-orange-500/10 text-orange-500",
-  critical: "bg-red-500/10 text-red-500",
+  low: "bg-green-500/10 text-green-500 border-green-500/20",
+  medium: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  high: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  critical: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
 export const statusColors: Record<string, string> = {
-  pending: "bg-gray-500/10 text-gray-500",
-  in_progress: "bg-blue-500/10 text-blue-500",
-  completed: "bg-green-500/10 text-green-500",
-  blocked: "bg-red-500/10 text-red-500",
-  failed: "bg-red-500/10 text-red-500",
-  identified: "bg-gray-500/10 text-gray-500",
-  mitigating: "bg-blue-500/10 text-blue-500",
-  resolved: "bg-green-500/10 text-green-500",
-  accepted: "bg-purple-500/10 text-purple-500",
+  active: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  pending: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  in_progress: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  completed: "bg-green-500/10 text-green-500 border-green-500/20",
+  blocked: "bg-red-500/10 text-red-500 border-red-500/20",
+  on_hold: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  failed: "bg-red-500/10 text-red-500 border-red-500/20",
+  identified: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  mitigating: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  resolved: "bg-green-500/10 text-green-500 border-green-500/20",
+  accepted: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+};
+
+export const fieldTypeColors: Record<string, string> = {
+  text: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  rich_text: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+  number: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  date: "bg-green-500/10 text-green-500 border-green-500/20",
+  url: "bg-cyan-500/10 text-cyan-500 border-cyan-500/20",
+  multi_select: "bg-orange-500/10 text-orange-500 border-orange-500/20",
+  checklist: "bg-pink-500/10 text-pink-500 border-pink-500/20",
+  json: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
 };
 
 export const recommendationLabels: Record<string, string> = {
@@ -30,17 +49,32 @@ export const recommendationLabels: Record<string, string> = {
 };
 
 export const recommendationColors: Record<string, string> = {
-  worth_taking: "bg-green-500/10 text-green-500",
-  review_needed: "bg-yellow-500/10 text-yellow-500",
-  not_recommended: "bg-red-500/10 text-red-500",
+  worth_taking: "bg-green-500/10 text-green-500 border-green-500/20",
+  review_needed: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  not_recommended: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
 export const raciColors: Record<string, string> = {
-  responsible: "bg-blue-500/10 text-blue-500",
-  accountable: "bg-purple-500/10 text-purple-500",
-  consulted: "bg-yellow-500/10 text-yellow-500",
-  informed: "bg-gray-500/10 text-gray-500",
+  responsible: "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  accountable: "bg-purple-500/10 text-purple-500 border-purple-500/20",
+  consulted: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+  informed: "bg-gray-500/10 text-gray-500 border-gray-500/20",
 };
+
+export const timelineColors = [
+  "bg-blue-500/10 text-blue-500",
+  "bg-purple-500/10 text-purple-500",
+  "bg-green-500/10 text-green-500",
+  "bg-orange-500/10 text-orange-500",
+  "bg-pink-500/10 text-pink-500",
+  "bg-cyan-500/10 text-cyan-500",
+  "bg-yellow-500/10 text-yellow-500",
+  "bg-indigo-500/10 text-indigo-500",
+  "bg-red-500/10 text-red-500",
+  "bg-teal-500/10 text-teal-500",
+  "bg-lime-500/10 text-lime-500",
+  "bg-amber-500/10 text-amber-500",
+] as const;
 
 export const PRIORITY_OPTIONS = [
   { value: "high", label: "High" },
@@ -53,6 +87,13 @@ export const MILESTONE_STATUS_OPTIONS = [
   { value: "in_progress", label: "In progress" },
   { value: "completed", label: "Completed" },
   { value: "blocked", label: "Blocked" },
+] as const;
+
+export const OBJECTIVE_STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "completed", label: "Completed" },
+  { value: "on_hold", label: "On Hold" },
 ] as const;
 
 export const RISK_IMPACT_OPTIONS = [

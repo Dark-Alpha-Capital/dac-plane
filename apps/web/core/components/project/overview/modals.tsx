@@ -11,6 +11,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type {
   IDeliverable,
   IMilestone,
+  IObjective,
   IRisk,
   IRaciAssignment,
   ITimelineItem,
@@ -24,6 +25,7 @@ import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
 import type {
   TDeliverablePayload,
   TMilestonePayload,
+  TObjectivePayload,
   TRiskPayload,
   TRaciPayload,
   TTimelinePayload,
@@ -34,6 +36,7 @@ import {
   AI_STATUS_OPTIONS,
   FIELD_TYPE_OPTIONS,
   MILESTONE_STATUS_OPTIONS,
+  OBJECTIVE_STATUS_OPTIONS,
   PRIORITY_OPTIONS,
   RACI_OPTIONS,
   RISK_IMPACT_OPTIONS,
@@ -201,6 +204,86 @@ export function DeliverableModal(props: TDeliverableModalProps) {
               </label>
             )}
           />
+        </div>
+        <ModalFooter onClose={onClose} isSubmitting={isSubmitting} isEdit={Boolean(data)} />
+      </form>
+    </ModalCore>
+  );
+}
+
+// ── Objective ──────────────────────────────────────────────────
+
+type TObjectiveModalProps = TBaseModalProps & {
+  data?: IObjective | null;
+  onSubmit: (payload: TObjectivePayload) => Promise<void>;
+};
+
+export function ObjectiveModal(props: TObjectiveModalProps) {
+  const { isOpen, onClose, data, onSubmit } = props;
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isSubmitting, errors },
+  } = useForm<TObjectivePayload>({
+    defaultValues: { title: "", description: "", status: "active" },
+  });
+
+  useEffect(() => {
+    if (!isOpen) return;
+    reset({
+      title: data?.title ?? "",
+      description: data?.description ?? "",
+      status: data?.status ?? "active",
+    });
+  }, [isOpen, data, reset]);
+
+  const submit = async (formData: TObjectivePayload) => {
+    try {
+      await onSubmit(formData);
+      onClose();
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: "Success",
+        message: data ? "Objective updated." : "Objective created.",
+      });
+    } catch {
+      setToast({ type: TOAST_TYPE.ERROR, title: "Error", message: "Failed to save objective." });
+    }
+  };
+
+  return (
+    <ModalCore isOpen={isOpen} handleClose={onClose}>
+      <form onSubmit={handleSubmit(submit)}>
+        <div className="space-y-4 p-5">
+          <h3 className="text-lg font-medium text-primary">{data ? "Edit objective" : "Add objective"}</h3>
+          <div>
+            <FieldLabel required>Title</FieldLabel>
+            <Controller
+              control={control}
+              name="title"
+              rules={{ required: true }}
+              render={({ field }) => <Input {...field} className="w-full" hasError={Boolean(errors.title)} />}
+            />
+          </div>
+          <div>
+            <FieldLabel>Description</FieldLabel>
+            <Controller
+              control={control}
+              name="description"
+              render={({ field }) => <TextArea {...field} className="min-h-20 w-full" />}
+            />
+          </div>
+          <div>
+            <FieldLabel>Status</FieldLabel>
+            <Controller
+              control={control}
+              name="status"
+              render={({ field: { value, onChange } }) => (
+                <SelectField value={value || "active"} onChange={onChange} options={OBJECTIVE_STATUS_OPTIONS} />
+              )}
+            />
+          </div>
         </div>
         <ModalFooter onClose={onClose} isSubmitting={isSubmitting} isEdit={Boolean(data)} />
       </form>

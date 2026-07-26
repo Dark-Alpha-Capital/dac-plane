@@ -248,6 +248,7 @@ from .project_meta import (
 from .project_planning import (
     DeliverableViewSet,
     MilestoneViewSet,
+    ObjectiveViewSet,
     RiskViewSet,
     RaciAssignmentViewSet,
     TimelineItemViewSet,

@@ -101,6 +101,29 @@ class Risk(ProjectBaseModel):
         return self.description[:100]
 
 
+class Objective(ProjectBaseModel):
+    STATUS_CHOICES = (
+        ("active", "Active"),
+        ("in_progress", "In Progress"),
+        ("completed", "Completed"),
+        ("on_hold", "On Hold"),
+    )
+
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    sort_order = models.FloatField(default=65535)
+
+    class Meta:
+        verbose_name = "Objective"
+        verbose_name_plural = "Objectives"
+        db_table = "objectives"
+        ordering = ("sort_order", "created_at")
+
+    def __str__(self):
+        return self.title
+
+
 class RaciAssignment(ProjectBaseModel):
     RESPONSIBILITY_CHOICES = (
         ("responsible", "Responsible"),

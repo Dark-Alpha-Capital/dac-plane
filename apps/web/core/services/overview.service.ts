@@ -8,6 +8,7 @@ import { API_BASE_URL } from "@plane/constants";
 import type {
   IDeliverable,
   IMilestone,
+  IObjective,
   IRisk,
   IRaciAssignment,
   ITimelineItem,
@@ -17,6 +18,7 @@ import type {
   TProjectAIEvaluationUpsert,
   TDeliverablePriority,
   TMilestoneStatus,
+  TObjectiveStatus,
   TRiskImpact,
   TRiskLikelihood,
   TRiskStatus,
@@ -55,6 +57,13 @@ export type TRaciPayload = {
   user_id?: string;
   responsibility?: TRaciResponsibility | string;
   notes?: string;
+};
+
+export type TObjectivePayload = {
+  title: string;
+  description?: string;
+  status?: TObjectiveStatus | string;
+  sort_order?: number;
 };
 
 export type TTimelinePayload = {
@@ -232,6 +241,45 @@ export class ProjectOverviewService extends APIService {
 
   async deleteRaciAssignment(workspaceSlug: string, projectId: string, assignmentId: string): Promise<void> {
     return this.delete(this.projectPath(workspaceSlug, projectId, "raci-assignments", assignmentId))
+      .then(() => undefined)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  // ── Objectives ────────────────────────────────────────────────
+
+  async getObjectives(workspaceSlug: string, projectId: string): Promise<IObjective[]> {
+    return this.get(this.projectPath(workspaceSlug, projectId, "objectives"))
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createObjective(workspaceSlug: string, projectId: string, data: TObjectivePayload): Promise<IObjective> {
+    return this.post(this.projectPath(workspaceSlug, projectId, "objectives"), data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateObjective(
+    workspaceSlug: string,
+    projectId: string,
+    objectiveId: string,
+    data: Partial<TObjectivePayload>
+  ): Promise<IObjective> {
+    return this.patch(this.projectPath(workspaceSlug, projectId, "objectives", objectiveId), data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async deleteObjective(workspaceSlug: string, projectId: string, objectiveId: string): Promise<void> {
+    return this.delete(this.projectPath(workspaceSlug, projectId, "objectives", objectiveId))
       .then(() => undefined)
       .catch((error) => {
         throw error?.response?.data;

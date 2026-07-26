@@ -5,11 +5,12 @@
  */
 
 import { useState } from "react";
-import { mutate } from "swr";
-import { AlertTriangle, CheckCircle2, Clock, Sparkles, Target, Users } from "lucide-react";
+import { useSWRConfig } from "swr";
+import { AlertTriangle, Calendar, CheckCircle2, Clock, Flag, Sparkles, Target, Users } from "lucide-react";
 import type {
   IDeliverable,
   IMilestone,
+  IObjective,
   IRisk,
   IRaciAssignment,
   ITimelineItem,
@@ -17,16 +18,21 @@ import type {
   IProjectFieldSchema,
   IProjectAIEvaluation,
 } from "@plane/types";
+import { Avatar } from "@plane/ui";
 import { useMember } from "@/hooks/store/use-member";
+import { getFileURL } from "@plane/utils";
 import { ProjectOverviewService } from "@/services/overview.service";
 import {
+  fieldTypeColors,
   formatFieldValue,
   impactColors,
   overviewSwrKey,
+  priorityColors,
   raciColors,
   recommendationColors,
   recommendationLabels,
   statusColors,
+  timelineColors,
 } from "./constants";
 import {
   AIEvaluationModal,
@@ -34,6 +40,7 @@ import {
   FieldSchemaModal,
   FieldValueModal,
   MilestoneModal,
+  ObjectiveModal,
   RaciModal,
   RiskModal,
   TimelineModal,
@@ -50,12 +57,45 @@ type TOverviewSectionsProps = {
   aiEvaluation: IProjectAIEvaluation | null | undefined;
   deliverables: IDeliverable[] | undefined;
   milestones: IMilestone[] | undefined;
+  objectives: IObjective[] | undefined;
   risks: IRisk[] | undefined;
   raciAssignments: IRaciAssignment[] | undefined;
   timelineItems: ITimelineItem[] | undefined;
   fieldValues: IProjectFieldValue[] | undefined;
   fieldSchemas: IProjectFieldSchema[] | undefined;
 };
+
+function Badge({
+  label,
+  className = "bg-gray-500/10 text-gray-500 border-gray-500/20",
+}: {
+  label: string;
+  className?: string;
+}) {
+  return (
+    <span
+      className={`text-2xs inline-flex items-center rounded-full border px-2 py-0.5 font-medium capitalize ${className}`}
+    >
+      {label.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function ScoreBar({ score, max = 5 }: { score: number | null; max?: number }) {
+  if (score === null) return <span className="text-sm text-tertiary">—</span>;
+  const pct = Math.min(Math.max((score / max) * 100, 0), 100);
+  const color = pct >= 80 ? "bg-green-500" : pct >= 60 ? "bg-blue-500" : pct >= 40 ? "bg-yellow-500" : "bg-red-500";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="bg-custom-background-90 h-2 w-24 overflow-hidden rounded-full">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-xs font-semibold text-primary">
+        {score} <span className="font-normal text-tertiary">/ {max}</span>
+      </span>
+    </div>
+  );
+}
 
 export function OverviewSections(props: TOverviewSectionsProps) {
   const {
@@ -65,6 +105,7 @@ export function OverviewSections(props: TOverviewSectionsProps) {
     aiEvaluation,
     deliverables,
     milestones,
+    objectives,
     risks,
     raciAssignments,
     timelineItems,
@@ -73,11 +114,13 @@ export function OverviewSections(props: TOverviewSectionsProps) {
   } = props;
 
   const { getUserDetails } = useMember();
+  const { mutate } = useSWRConfig();
 
   const [deliverableModal, setDeliverableModal] = useState<{ open: boolean; data?: IDeliverable | null }>({
     open: false,
   });
   const [milestoneModal, setMilestoneModal] = useState<{ open: boolean; data?: IMilestone | null }>({ open: false });
+  const [objectiveModal, setObjectiveModal] = useState<{ open: boolean; data?: IObjective | null }>({ open: false });
   const [riskModal, setRiskModal] = useState<{ open: boolean; data?: IRisk | null }>({ open: false });
   const [raciModal, setRaciModal] = useState<{ open: boolean; data?: IRaciAssignment | null }>({ open: false });
   const [timelineModal, setTimelineModal] = useState<{ open: boolean; data?: ITimelineItem | null }>({ open: false });
@@ -93,7 +136,8 @@ export function OverviewSections(props: TOverviewSectionsProps) {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-5">
+        {/* ── AI Evaluation ──────────────────────────────── */}
         <SectionCard
           title="AI Evaluation"
           icon={Sparkles}
@@ -102,30 +146,27 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           addLabel={aiEvaluation ? "Edit" : "Add"}
         >
           {aiEvaluation ? (
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="text-h3-semibold text-primary">
-                  {aiEvaluation.score != null ? `${aiEvaluation.score}` : "—"}
-                  <span className="text-sm font-normal text-tertiary"> / 5</span>
-                </div>
+                <ScoreBar score={aiEvaluation.score} />
                 {aiEvaluation.recommendation ? (
-                  <span
-                    className={`text-2xs rounded px-1.5 py-0.5 ${recommendationColors[aiEvaluation.recommendation] || "bg-gray-500/10 text-gray-500"}`}
-                  >
-                    {recommendationLabels[aiEvaluation.recommendation] || aiEvaluation.recommendation}
-                  </span>
+                  <Badge
+                    label={recommendationLabels[aiEvaluation.recommendation] || aiEvaluation.recommendation}
+                    className={recommendationColors[aiEvaluation.recommendation]}
+                  />
                 ) : null}
-                <span
-                  className={`text-2xs rounded px-1.5 py-0.5 capitalize ${statusColors[aiEvaluation.status] || ""}`}
-                >
-                  {aiEvaluation.status}
-                </span>
+                <Badge label={aiEvaluation.status} className={statusColors[aiEvaluation.status]} />
               </div>
               {aiEvaluation.analysis ? (
-                <p className="text-sm leading-relaxed text-secondary">{aiEvaluation.analysis}</p>
+                <div className="border-custom-border-100 rounded-lg border p-3">
+                  <p className="text-sm leading-relaxed text-secondary">{aiEvaluation.analysis}</p>
+                </div>
               ) : null}
               {aiEvaluation.screened_at ? (
-                <p className="text-2xs text-tertiary">Screened {new Date(aiEvaluation.screened_at).toLocaleString()}</p>
+                <p className="text-2xs flex items-center gap-1.5 text-tertiary">
+                  <Calendar className="size-3" />
+                  Screened {new Date(aiEvaluation.screened_at).toLocaleString()}
+                </p>
               ) : null}
             </div>
           ) : (
@@ -133,7 +174,51 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           )}
         </SectionCard>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* ── Objectives ─────────────────────────────────── */}
+        <SectionCard
+          title="Objectives"
+          count={objectives?.length ?? 0}
+          icon={Target}
+          canEdit={canEdit}
+          onAdd={() => setObjectiveModal({ open: true, data: null })}
+        >
+          {objectives && objectives.length > 0 ? (
+            <div className="space-y-2">
+              {objectives.map((o) => (
+                <div
+                  key={o.id}
+                  className="group border-custom-border-100 hover:border-custom-border-200 rounded-lg border p-3 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-primary">{o.title}</span>
+                        <Badge label={o.status} className={statusColors[o.status]} />
+                      </div>
+                      {o.description && (
+                        <p className="text-xs mt-1.5 line-clamp-2 leading-relaxed text-tertiary">{o.description}</p>
+                      )}
+                    </div>
+                    <PlanningItemActions
+                      canEdit={canEdit}
+                      onEdit={() => setObjectiveModal({ open: true, data: o })}
+                      onDelete={async () => {
+                        await overviewService.deleteObjective(workspaceSlug, projectId, o.id);
+                        await refresh("OBJECTIVES");
+                      }}
+                      deleteTitle="Delete objective"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyMessage>No objectives yet</EmptyMessage>
+          )}
+        </SectionCard>
+
+        {/* ── Deliverables + Milestones grid ─────────────── */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           <SectionCard
             title="Deliverables"
             count={deliverables?.length ?? 0}
@@ -142,26 +227,38 @@ export function OverviewSections(props: TOverviewSectionsProps) {
             onAdd={() => setDeliverableModal({ open: true, data: null })}
           >
             {deliverables && deliverables.length > 0 ? (
-              <ul className="space-y-2">
+              <div className="space-y-2">
                 {deliverables.map((d) => (
-                  <li
+                  <div
                     key={d.id}
-                    className="group border-custom-border-100 flex items-center justify-between gap-2 rounded border p-2"
+                    className="group border-custom-border-100 hover:border-custom-border-200 rounded-lg border p-3 transition-colors"
                   >
-                    <div className="flex min-w-0 items-center gap-2">
-                      <span className={d.completed ? "text-green-500" : "text-tertiary"}>
-                        {d.completed ? <CheckCircle2 className="size-4" /> : <Clock className="size-4" />}
-                      </span>
-                      <span
-                        className={`text-sm truncate ${d.completed ? "text-secondary line-through" : "text-primary"}`}
-                      >
-                        {d.title}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {d.priority && (
-                        <span className="text-2xs rounded px-1.5 py-0.5 text-tertiary capitalize">{d.priority}</span>
-                      )}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className={d.completed ? "text-green-500" : "text-tertiary"}>
+                            {d.completed ? <CheckCircle2 className="size-4" /> : <Clock className="size-4" />}
+                          </span>
+                          <span
+                            className={`text-sm ${d.completed ? "text-secondary line-through" : "font-medium text-primary"}`}
+                          >
+                            {d.title}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          {d.priority && <Badge label={d.priority} className={priorityColors[d.priority]} />}
+                          {d.due_date && (
+                            <span className="text-2xs flex items-center gap-1 text-tertiary">
+                              <Calendar className="size-3" />
+                              {new Date(d.due_date).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
                       <PlanningItemActions
                         canEdit={canEdit}
                         onEdit={() => setDeliverableModal({ open: true, data: d })}
@@ -172,9 +269,9 @@ export function OverviewSections(props: TOverviewSectionsProps) {
                         deleteTitle="Delete deliverable"
                       />
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
               <EmptyMessage>No deliverables yet</EmptyMessage>
             )}
@@ -183,46 +280,60 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           <SectionCard
             title="Milestones"
             count={milestones?.length ?? 0}
-            icon={Target}
+            icon={Flag}
             canEdit={canEdit}
             onAdd={() => setMilestoneModal({ open: true, data: null })}
           >
             {milestones && milestones.length > 0 ? (
-              <ul className="space-y-2">
+              <div className="space-y-2">
                 {milestones.map((m) => (
-                  <li key={m.id} className="group border-custom-border-100 rounded border p-2">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-primary">{m.name}</span>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-2xs rounded px-1.5 py-0.5 capitalize ${statusColors[m.status] || ""}`}>
-                          {m.status.replace("_", " ")}
-                        </span>
-                        <PlanningItemActions
-                          canEdit={canEdit}
-                          onEdit={() => setMilestoneModal({ open: true, data: m })}
-                          onDelete={async () => {
-                            await overviewService.deleteMilestone(workspaceSlug, projectId, m.id);
-                            await refresh("MILESTONES");
-                          }}
-                          deleteTitle="Delete milestone"
-                        />
+                  <div
+                    key={m.id}
+                    className="group border-custom-border-100 hover:border-custom-border-200 rounded-lg border p-3 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-primary">{m.name}</span>
+                          <Badge label={m.status} className={statusColors[m.status]} />
+                        </div>
+                        {m.definition_of_done && (
+                          <p className="text-xs mt-1.5 line-clamp-2 text-tertiary">{m.definition_of_done}</p>
+                        )}
+                        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                          {m.due_date && (
+                            <span className="text-2xs flex items-center gap-1 text-tertiary">
+                              <Calendar className="size-3" />
+                              Due{" "}
+                              {new Date(m.due_date).toLocaleDateString(undefined, {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                              })}
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <PlanningItemActions
+                        canEdit={canEdit}
+                        onEdit={() => setMilestoneModal({ open: true, data: m })}
+                        onDelete={async () => {
+                          await overviewService.deleteMilestone(workspaceSlug, projectId, m.id);
+                          await refresh("MILESTONES");
+                        }}
+                        deleteTitle="Delete milestone"
+                      />
                     </div>
-                    {m.definition_of_done && (
-                      <p className="text-xs mt-1 line-clamp-2 text-tertiary">{m.definition_of_done}</p>
-                    )}
-                    {m.due_date && (
-                      <p className="text-2xs mt-1 text-tertiary">Due: {new Date(m.due_date).toLocaleDateString()}</p>
-                    )}
-                  </li>
+                  </div>
                 ))}
-              </ul>
+              </div>
             ) : (
               <EmptyMessage>No milestones yet</EmptyMessage>
             )}
           </SectionCard>
         </div>
 
+        {/* ── Risks ──────────────────────────────────────── */}
         <SectionCard
           title="Risks"
           count={risks?.length ?? 0}
@@ -231,30 +342,29 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           onAdd={() => setRiskModal({ open: true, data: null })}
         >
           {risks && risks.length > 0 ? (
-            <div className="space-y-2">
+            <div className="divide-y-custom-border-100 divide-y">
               {risks.map((r) => (
-                <div key={r.id} className="group border-custom-border-100 rounded border p-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm text-primary">{r.description}</p>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <span className={`text-2xs rounded px-1.5 py-0.5 capitalize ${impactColors[r.impact] || ""}`}>
-                        {r.impact}
-                      </span>
-                      <span className={`text-2xs rounded px-1.5 py-0.5 capitalize ${statusColors[r.status] || ""}`}>
-                        {r.status}
-                      </span>
-                      <PlanningItemActions
-                        canEdit={canEdit}
-                        onEdit={() => setRiskModal({ open: true, data: r })}
-                        onDelete={async () => {
-                          await overviewService.deleteRisk(workspaceSlug, projectId, r.id);
-                          await refresh("RISKS");
-                        }}
-                        deleteTitle="Delete risk"
-                      />
+                <div key={r.id} className="group py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-primary">{r.description}</p>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <Badge label={r.impact} className={impactColors[r.impact]} />
+                        {r.likelihood && <span className="text-2xs text-tertiary">Likelihood: {r.likelihood}</span>}
+                        <Badge label={r.status} className={statusColors[r.status]} />
+                      </div>
+                      {r.mitigation && <p className="text-xs mt-1.5 text-tertiary">Mitigation: {r.mitigation}</p>}
                     </div>
+                    <PlanningItemActions
+                      canEdit={canEdit}
+                      onEdit={() => setRiskModal({ open: true, data: r })}
+                      onDelete={async () => {
+                        await overviewService.deleteRisk(workspaceSlug, projectId, r.id);
+                        await refresh("RISKS");
+                      }}
+                      deleteTitle="Delete risk"
+                    />
                   </div>
-                  {r.mitigation && <p className="text-xs mt-1 text-tertiary">Mitigation: {r.mitigation}</p>}
                 </div>
               ))}
             </div>
@@ -263,6 +373,7 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           )}
         </SectionCard>
 
+        {/* ── RACI Matrix ────────────────────────────────── */}
         <SectionCard
           title="RACI Matrix"
           count={raciAssignments?.length ?? 0}
@@ -274,30 +385,38 @@ export function OverviewSections(props: TOverviewSectionsProps) {
             <div className="overflow-x-auto">
               <table className="text-sm w-full">
                 <thead>
-                  <tr className="border-custom-border-200 text-xs border-b text-left text-tertiary">
-                    <th className="pb-2 font-medium">Area</th>
-                    <th className="pb-2 font-medium">Member</th>
-                    <th className="pb-2 font-medium">Role</th>
-                    <th className="pb-2 font-medium">Notes</th>
-                    {canEdit && <th className="pb-2 font-medium" />}
+                  <tr className="border-custom-border-200 border-b">
+                    <th className="text-xs pb-2.5 text-left font-medium text-tertiary">Area</th>
+                    <th className="text-xs pb-2.5 text-left font-medium text-tertiary">Member</th>
+                    <th className="text-xs pb-2.5 text-left font-medium text-tertiary">Role</th>
+                    <th className="text-xs pb-2.5 text-left font-medium text-tertiary">Notes</th>
+                    {canEdit && <th className="text-xs pb-2.5 font-medium text-tertiary" />}
                   </tr>
                 </thead>
                 <tbody>
                   {raciAssignments.map((r) => {
                     const member = r.user_id ? getUserDetails(r.user_id) : undefined;
                     return (
-                      <tr key={r.id} className="group border-custom-border-100 border-b last:border-0">
-                        <td className="py-2 text-primary">{r.area}</td>
-                        <td className="py-2 text-secondary">{member?.display_name || "—"}</td>
-                        <td className="py-2">
-                          <span
-                            className={`text-2xs rounded px-1.5 py-0.5 capitalize ${raciColors[r.responsibility] || ""}`}
-                          >
-                            {r.responsibility}
-                          </span>
+                      <tr
+                        key={r.id}
+                        className="group border-custom-border-100 hover:bg-custom-background-90 border-b transition-colors last:border-0"
+                      >
+                        <td className="py-2.5 pr-3 font-medium text-primary">{r.area}</td>
+                        <td className="py-2.5 pr-3">
+                          {member ? (
+                            <div className="flex items-center gap-2">
+                              <Avatar name={member.display_name} src={getFileURL(member.avatar_url)} size="sm" />
+                              <span className="text-secondary">{member.display_name}</span>
+                            </div>
+                          ) : (
+                            <span className="text-tertiary">—</span>
+                          )}
                         </td>
-                        <td className="py-2 text-tertiary">{r.notes || "—"}</td>
-                        <td className="py-2">
+                        <td className="py-2.5 pr-3">
+                          <Badge label={r.responsibility} className={raciColors[r.responsibility]} />
+                        </td>
+                        <td className="max-w-[180px] truncate py-2.5 pr-3 text-tertiary">{r.notes || "—"}</td>
+                        <td className="py-2.5">
                           <PlanningItemActions
                             canEdit={canEdit}
                             onEdit={() => setRaciModal({ open: true, data: r })}
@@ -319,6 +438,7 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           )}
         </SectionCard>
 
+        {/* ── Timeline ───────────────────────────────────── */}
         <SectionCard
           title="Timeline"
           count={timelineItems?.length ?? 0}
@@ -330,43 +450,52 @@ export function OverviewSections(props: TOverviewSectionsProps) {
             <div className="space-y-1">
               {[...timelineItems]
                 .toSorted((a, b) => new Date(a.target_date).getTime() - new Date(b.target_date).getTime())
-                .map((ti) => (
-                  <div key={ti.id} className="group flex items-center gap-3 rounded p-2 hover:bg-layer-1">
-                    <div className="bg-blue-500/10 text-xs text-blue-500 flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-medium">
-                      {new Date(ti.target_date).getDate()}
+                .map((ti) => {
+                  const colorIdx = new Date(ti.target_date).getMonth() % timelineColors.length;
+                  return (
+                    <div
+                      key={ti.id}
+                      className="group border-custom-border-100 hover:border-custom-border-200 flex items-center gap-3 rounded-lg border p-2.5 transition-colors"
+                    >
+                      <div
+                        className={`text-xs flex h-9 w-9 shrink-0 items-center justify-center rounded-lg font-semibold ${timelineColors[colorIdx]}`}
+                      >
+                        {new Date(ti.target_date).getDate()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-primary">{ti.title}</p>
+                        <p className="text-2xs text-tertiary">
+                          {new Date(ti.target_date).toLocaleDateString(undefined, {
+                            month: "long",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      {ti.milestone_id && (
+                        <span className="text-2xs bg-purple-500/10 text-purple-500 border-purple-500/20 shrink-0 rounded-full border px-2 py-0.5 font-medium">
+                          milestone
+                        </span>
+                      )}
+                      <PlanningItemActions
+                        canEdit={canEdit}
+                        onEdit={() => setTimelineModal({ open: true, data: ti })}
+                        onDelete={async () => {
+                          await overviewService.deleteTimelineItem(workspaceSlug, projectId, ti.id);
+                          await refresh("TIMELINE");
+                        }}
+                        deleteTitle="Delete timeline item"
+                      />
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm text-primary">{ti.title}</p>
-                      <p className="text-2xs text-tertiary">
-                        {new Date(ti.target_date).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </p>
-                    </div>
-                    {ti.milestone_id && (
-                      <span className="text-2xs bg-purple-500/10 text-purple-500 shrink-0 rounded px-1.5 py-0.5">
-                        milestone
-                      </span>
-                    )}
-                    <PlanningItemActions
-                      canEdit={canEdit}
-                      onEdit={() => setTimelineModal({ open: true, data: ti })}
-                      onDelete={async () => {
-                        await overviewService.deleteTimelineItem(workspaceSlug, projectId, ti.id);
-                        await refresh("TIMELINE");
-                      }}
-                      deleteTitle="Delete timeline item"
-                    />
-                  </div>
-                ))}
+                  );
+                })}
             </div>
           ) : (
             <EmptyMessage>No timeline items yet</EmptyMessage>
           )}
         </SectionCard>
 
+        {/* ── Project Fields ─────────────────────────────── */}
         <SectionCard
           title="Project Fields"
           count={(fieldSchemas?.length ?? 0) || (fieldValues?.length ?? 0)}
@@ -375,53 +504,63 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           addLabel="Add field"
         >
           {fieldSchemas && fieldSchemas.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-2.5">
               {fieldSchemas.map((schema) => {
                 const fv = fieldValues?.find((v) => v.field === schema.id || v.field_detail?.id === schema.id);
                 return (
                   <div
                     key={schema.id}
-                    className="group border-custom-border-100 flex items-start justify-between gap-3 rounded border p-3"
+                    className="group border-custom-border-100 hover:border-custom-border-200 rounded-lg border p-3 transition-colors"
                   >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-medium text-primary">{schema.name}</h4>
-                        <span className="text-2xs rounded bg-layer-1 px-1.5 py-0.5 text-tertiary">
-                          {schema.field_type}
-                        </span>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-sm font-medium text-primary">{schema.name}</h4>
+                          <Badge
+                            label={schema.field_type}
+                            className={
+                              fieldTypeColors[schema.field_type] || "bg-gray-500/10 text-gray-500 border-gray-500/20"
+                            }
+                          />
+                          {schema.is_required && <span className="text-2xs text-red-500 font-medium">Required</span>}
+                        </div>
+                        {fv ? (
+                          <p className="text-sm mt-1.5 font-medium text-secondary">{formatFieldValue(fv.value)}</p>
+                        ) : (
+                          <p className="text-sm mt-1.5 text-tertiary italic">No value set</p>
+                        )}
                       </div>
-                      <p className="text-sm mt-1 text-secondary">{fv ? formatFieldValue(fv.value) : "No value set"}</p>
+                      {canEdit && (
+                        <div className="flex shrink-0 items-center gap-1">
+                          <button
+                            type="button"
+                            className="text-xs rounded-md px-2 py-1 text-tertiary transition-colors hover:bg-layer-1 hover:text-primary"
+                            onClick={() => setValueModal({ open: true, schema, data: fv ?? null })}
+                          >
+                            {fv ? "Edit value" : "Set value"}
+                          </button>
+                          <PlanningItemActions
+                            canEdit={canEdit}
+                            onEdit={() => setSchemaModal({ open: true, data: schema })}
+                            onDelete={async () => {
+                              await overviewService.deleteFieldSchema(workspaceSlug, schema.id, projectId);
+                              await Promise.all([refresh("FIELD_SCHEMAS"), refresh("FIELDS")]);
+                            }}
+                            deleteTitle="Deactivate field"
+                            deleteContent="This will deactivate the field schema for this project."
+                          />
+                        </div>
+                      )}
                     </div>
-                    {canEdit && (
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          className="text-xs rounded px-2 py-1 text-tertiary hover:bg-layer-1 hover:text-primary"
-                          onClick={() => setValueModal({ open: true, schema, data: fv ?? null })}
-                        >
-                          {fv ? "Edit value" : "Set value"}
-                        </button>
-                        <PlanningItemActions
-                          canEdit={canEdit}
-                          onEdit={() => setSchemaModal({ open: true, data: schema })}
-                          onDelete={async () => {
-                            await overviewService.deleteFieldSchema(workspaceSlug, schema.id, projectId);
-                            await Promise.all([refresh("FIELD_SCHEMAS"), refresh("FIELDS")]);
-                          }}
-                          deleteTitle="Deactivate field"
-                          deleteContent="This will deactivate the field schema for this project."
-                        />
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
           ) : fieldValues && fieldValues.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {fieldValues.map((fv) => (
-                <div key={fv.id}>
-                  <h4 className="text-sm mb-1 font-medium text-primary">{fv.field_detail?.name}</h4>
+                <div key={fv.id} className="border-custom-border-100 rounded-lg border p-3">
+                  <h4 className="text-sm mb-1 font-medium text-primary">{fv.field_detail?.name || "Field"}</h4>
                   <p className="text-sm text-secondary">{formatFieldValue(fv.value)}</p>
                 </div>
               ))}
@@ -431,6 +570,20 @@ export function OverviewSections(props: TOverviewSectionsProps) {
           )}
         </SectionCard>
       </div>
+
+      <ObjectiveModal
+        isOpen={objectiveModal.open}
+        data={objectiveModal.data}
+        onClose={() => setObjectiveModal({ open: false })}
+        onSubmit={async (payload) => {
+          if (objectiveModal.data) {
+            await overviewService.updateObjective(workspaceSlug, projectId, objectiveModal.data.id, payload);
+          } else {
+            await overviewService.createObjective(workspaceSlug, projectId, payload);
+          }
+          await refresh("OBJECTIVES");
+        }}
+      />
 
       <DeliverableModal
         isOpen={deliverableModal.open}

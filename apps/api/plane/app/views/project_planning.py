@@ -11,6 +11,7 @@ from .. import BaseViewSet
 from plane.app.serializers.project_planning import (
     DeliverableSerializer,
     MilestoneSerializer,
+    ObjectiveSerializer,
     RiskSerializer,
     RaciAssignmentSerializer,
     TimelineItemSerializer,
@@ -20,6 +21,7 @@ from plane.app.permissions import ROLE, allow_permission
 from plane.db.models import (
     Deliverable,
     Milestone,
+    Objective,
     Risk,
     RaciAssignment,
     TimelineItem,
@@ -163,6 +165,51 @@ class RiskViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def destroy(self, request, slug, project_id, pk):
         obj = Risk.objects.get(pk=pk, workspace__slug=slug, project_id=project_id)
+        obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ObjectiveViewSet(BaseViewSet):
+    serializer_class = ObjectiveSerializer
+    model = Objective
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .filter(workspace__slug=self.kwargs.get("slug"))
+            .filter(project_id=self.kwargs.get("project_id"))
+        )
+
+    def perform_create(self, serializer):
+        workspace = _get_workspace(self.kwargs)
+        serializer.save(workspace_id=workspace.id, project_id=self.kwargs.get("project_id"))
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def create(self, request, slug, project_id):
+        serializer = ObjectiveSerializer(data=request.data)
+        if serializer.is_valid():
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def list(self, request, slug, project_id):
+        serializer = ObjectiveSerializer(self.get_queryset(), many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def partial_update(self, request, slug, project_id, pk):
+        obj = Objective.objects.get(pk=pk, workspace__slug=slug, project_id=project_id)
+        serializer = ObjectiveSerializer(obj, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
+    def destroy(self, request, slug, project_id, pk):
+        obj = Objective.objects.get(pk=pk, workspace__slug=slug, project_id=project_id)
         obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
