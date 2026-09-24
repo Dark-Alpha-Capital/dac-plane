@@ -345,6 +345,8 @@ CELERY_IMPORTS = (
     "plane.license.bgtasks.telemetry_metrics",
     # management tasks
     "plane.bgtasks.dummy_data_task",
+    # API activity logging tasks
+    "plane.bgtasks.logger_task",
     # issue version tasks
     "plane.bgtasks.issue_version_sync",
     "plane.bgtasks.issue_description_version_sync",
