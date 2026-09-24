@@ -46,6 +46,7 @@ from plane.app.serializers import (
 from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import INTAKE_ISSUE_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.bgtasks.webhook_task import model_activity
 from plane.bgtasks.issue_description_version_task import issue_description_version_task
 from plane.app.views.base import BaseAPIView
 from plane.utils.timezone_converter import user_timezone_converter
@@ -288,6 +289,15 @@ class IntakeIssueViewSet(BaseViewSet):
                 notification=True,
                 origin=base_host(request=request, is_app=True),
                 intake=str(intake_issue.id),
+            )
+            model_activity.delay(
+                model_name="issue",
+                model_id=str(serializer.data["id"]),
+                requested_data=request.data,
+                current_instance=None,
+                actor_id=request.user.id,
+                slug=slug,
+                origin=base_host(request=request, is_app=True),
             )
             # updated issue description version
             issue_description_version_task.delay(

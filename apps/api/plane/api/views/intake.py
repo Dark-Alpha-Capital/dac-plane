@@ -27,6 +27,7 @@ from plane.api.serializers import (
 )
 from plane.app.permissions import ProjectLitePermission
 from plane.bgtasks.issue_activities_task import issue_activity
+from plane.bgtasks.webhook_task import model_activity
 from plane.db.models import Intake, IntakeIssue, Issue, Project, ProjectMember, State, StateGroup
 from plane.utils.host import base_host
 from plane.utils.content_validator import validate_html_content
@@ -218,6 +219,15 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
             current_instance=None,
             epoch=int(timezone.now().timestamp()),
             intake=str(intake_issue.id),
+        )
+        model_activity.delay(
+            model_name="issue",
+            model_id=str(issue.id),
+            requested_data=request.data,
+            current_instance=None,
+            actor_id=request.user.id,
+            slug=slug,
+            origin=base_host(request=request, is_app=True),
         )
 
         serializer = IntakeIssueSerializer(intake_issue)
