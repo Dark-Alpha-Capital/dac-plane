@@ -65,3 +65,4 @@ from .invite import WorkspaceInvitationsViewset
 from .sticky import StickyViewSet
 
 from .page import ProjectExternalPageAPIEndpoint
+from .work_item_type import WorkItemTypeDetailAPIEndpoint, WorkItemTypeListCreateAPIEndpoint
