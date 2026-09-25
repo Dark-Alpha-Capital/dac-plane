@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework import status
 
 # Module imports
-from .. import BaseViewSet, BaseAPIView
+from .base import BaseViewSet, BaseAPIView
 from plane.app.serializers.project_meta import (
     ProjectFieldSchemaSerializer,
     ProjectFieldValueSerializer,
