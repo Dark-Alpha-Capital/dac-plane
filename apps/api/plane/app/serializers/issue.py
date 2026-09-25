@@ -41,6 +41,7 @@ from plane.db.models import (
     IssueVersion,
     IssueDescriptionVersion,
     ProjectMember,
+    ProjectIssueType,
     EstimatePoint,
 )
 from plane.utils.content_validator import (
@@ -203,6 +204,24 @@ class IssueCreateSerializer(BaseSerializer):
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
         default_assignee_id = self.context["default_assignee_id"]
+
+        # Apply the project's native default work-item type when callers do not
+        # explicitly provide one. Intake creation uses this serializer, so this
+        # keeps the project-specific default authoritative across the app.
+        if not validated_data.get("type"):
+            default_type_id = (
+                ProjectIssueType.objects.filter(
+                    project_id=project_id,
+                    is_default=True,
+                    deleted_at__isnull=True,
+                    issue_type__is_active=True,
+                    issue_type__deleted_at__isnull=True,
+                )
+                .values_list("issue_type_id", flat=True)
+                .first()
+            )
+            if default_type_id:
+                validated_data["type_id"] = default_type_id
 
         # Create Issue
         issue = Issue.objects.create(**validated_data, project_id=project_id)

@@ -28,7 +28,7 @@ from plane.api.serializers import (
 from plane.app.permissions import ProjectLitePermission
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.bgtasks.webhook_task import model_activity
-from plane.db.models import Intake, IntakeIssue, Issue, Project, ProjectMember, State, StateGroup
+from plane.db.models import Intake, IntakeIssue, Issue, Project, ProjectIssueType, ProjectMember, State, StateGroup
 from plane.utils.host import base_host
 from plane.utils.content_validator import validate_html_content
 from .base import BaseAPIView
@@ -193,6 +193,17 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
         raw_description_html = issue_data.get("description_html", "<p></p>")
         _, _, sanitized_description_html = validate_html_content(raw_description_html)
         safe_description_html = sanitized_description_html if sanitized_description_html is not None else "<p></p>"
+        default_type_id = (
+            ProjectIssueType.objects.filter(
+                project_id=project_id,
+                is_default=True,
+                deleted_at__isnull=True,
+                issue_type__is_active=True,
+                issue_type__deleted_at__isnull=True,
+            )
+            .values_list("issue_type_id", flat=True)
+            .first()
+        )
         issue = Issue.objects.create(
             name=issue_data.get("name"),
             description_json=description_json,
@@ -200,6 +211,7 @@ class IntakeIssueListCreateAPIEndpoint(BaseAPIView):
             priority=issue_data.get("priority", "none"),
             project_id=project_id,
             state_id=triage_state.id,
+            type_id=default_type_id,
         )
 
         # create an intake issue
